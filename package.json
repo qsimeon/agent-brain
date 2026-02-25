@@ -1,0 +1,26 @@
+{
+  "name": "agent-brain",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "seed": "npx tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^25.3.0",
+    "@types/react": "^19.2.14",
+    "d3": "^7.9.0",
+    "mongoose": "^9.2.2",
+    "nanoid": "^5.1.6",
+    "next": "^16.1.6",
+    "postcss": "^8.5.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3"
+  }
+}
