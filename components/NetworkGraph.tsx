@@ -107,11 +107,14 @@ export default function NetworkGraph() {
         .attr('fill', type === 'signal' ? '#3b82f680' : '#ef444480');
     });
 
+    const padding = 40;
     const simulation = d3.forceSimulation(data.nodes as any)
-      .force('link', d3.forceLink(data.edges).id((d: any) => d.id).distance(120))
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('link', d3.forceLink(data.edges).id((d: any) => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(30));
+      .force('collision', d3.forceCollide().radius(35))
+      .force('x', d3.forceX(width / 2).strength(0.1))
+      .force('y', d3.forceY(height / 2).strength(0.1));
 
     // Edges
     const link = svg.append('g')
@@ -193,6 +196,12 @@ export default function NetworkGraph() {
     });
 
     simulation.on('tick', () => {
+      // Clamp nodes within the SVG bounds
+      data.nodes.forEach((d: any) => {
+        d.x = Math.max(padding, Math.min(width - padding, d.x));
+        d.y = Math.max(padding, Math.min(height - padding, d.y));
+      });
+
       link
         .attr('x1', (d: any) => d.source.x)
         .attr('y1', (d: any) => d.source.y)

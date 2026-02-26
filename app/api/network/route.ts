@@ -32,31 +32,57 @@ export async function GET() {
   }));
 
   const edges: any[] = [];
+  const interneuronId = brainState?.currentInterneuronId?.toString();
+  const connectedNodeIds = new Set<string>();
 
   // Signal edges: sensor → interneuron
-  const interneuronId = brainState?.currentInterneuronId?.toString();
   for (const sig of recentSignals) {
     if (interneuronId) {
+      const sourceId = sig.fromAgentId.toString();
+      const targetId = sig.processedByBrainId?.toString() || interneuronId;
       edges.push({
-        source: sig.fromAgentId.toString(),
-        target: sig.processedByBrainId?.toString() || interneuronId,
+        source: sourceId,
+        target: targetId,
         type: 'signal',
         label: sig.type,
         createdAt: sig.createdAt,
       });
+      connectedNodeIds.add(sourceId);
+      connectedNodeIds.add(targetId);
     }
   }
 
   // Directive edges: interneuron → actuator
   for (const dir of recentDirectives) {
+    const sourceId = dir.fromBrainId.toString();
+    const targetId = dir.toAgentId.toString();
     edges.push({
-      source: dir.fromBrainId.toString(),
-      target: dir.toAgentId.toString(),
+      source: sourceId,
+      target: targetId,
       type: 'directive',
       label: dir.type,
       status: dir.status,
       createdAt: dir.createdAt,
     });
+    connectedNodeIds.add(sourceId);
+    connectedNodeIds.add(targetId);
+  }
+
+  // Structural edges: connect all non-interneuron agents to the interneuron
+  // so disconnected nodes still appear linked in the graph
+  if (interneuronId) {
+    for (const agent of agents) {
+      const agentId = agent._id.toString();
+      if (agentId !== interneuronId && !connectedNodeIds.has(agentId)) {
+        const edgeType = agent.role === 'sensor' ? 'signal' : 'directive';
+        edges.push({
+          source: edgeType === 'signal' ? agentId : interneuronId,
+          target: edgeType === 'signal' ? interneuronId : agentId,
+          type: edgeType,
+          label: 'awaiting',
+        });
+      }
+    }
   }
 
   return successResponse({
