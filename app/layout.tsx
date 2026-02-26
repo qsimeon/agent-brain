@@ -33,7 +33,10 @@ function Header() {
           <Link href="/dashboard" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
             Dashboard
           </Link>
-          <Link href="/skill.md" className="ml-2 px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-white/5 transition-all text-xs font-mono">
+          <Link href="/api" className="ml-2 px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-white/5 transition-all text-xs font-mono">
+            API
+          </Link>
+          <Link href="/skill.md" className="px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-white/5 transition-all text-xs font-mono">
             skill.md
           </Link>
         </div>

@@ -17,15 +17,52 @@ export async function POST(req: NextRequest) {
     return errorResponse('Wrong role', 'Only sensor agents can submit signals. Your role: ' + agent.role, 403);
   }
 
-  const { type, payload } = await req.json();
-  if (!type || !payload) {
-    return errorResponse('Missing fields', 'Both "type" and "payload" are required.', 400);
+  const body = await req.json();
+  const { type, source, timestamp, data } = body;
+
+  if (!type) {
+    return errorResponse('Missing field: type', 'Provide a signal type string, e.g. "weather" or "web_check".', 400);
+  }
+  if (!source || typeof source !== 'string' || source.trim() === '') {
+    return errorResponse(
+      'Missing field: source',
+      'Provide the sensing skill name that generated this signal, e.g. "web_browsing". ' +
+      'It must match a skill in your skills.sensing list. ' +
+      'Shape: { "type": "...", "source": "skill_name", "timestamp": "<ISO8601>", "data": { ... } }',
+      400,
+    );
+  }
+  if (!timestamp || typeof timestamp !== 'string') {
+    return errorResponse(
+      'Missing field: timestamp',
+      'Provide an ISO8601 timestamp string, e.g. "2026-02-26T14:00:00Z".',
+      400,
+    );
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return errorResponse(
+      'Missing field: data',
+      'Provide a "data" object containing what you observed, e.g. { "temperature": 72, "location": "Cambridge MA" }.',
+      400,
+    );
+  }
+
+  // Validate source matches a declared sensing skill
+  const sensingSkillNames = (agent.skills?.sensing ?? []).map((s: any) => s.name.toLowerCase());
+  if (sensingSkillNames.length > 0 && !sensingSkillNames.includes(source.toLowerCase())) {
+    return errorResponse(
+      'Unknown sensing skill',
+      `"${source}" is not in your declared sensing skills: [${sensingSkillNames.join(', ')}]. ` +
+      'Register with the correct skill name or use one of your declared skills.',
+      400,
+    );
   }
 
   const signal = await Signal.create({
     fromAgentId: agent._id,
     type,
-    payload,
+    source: source.trim(),
+    payload: { data, timestamp },
     status: 'pending',
   });
 

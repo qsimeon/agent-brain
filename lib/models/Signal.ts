@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 export interface ISignal extends Document {
   fromAgentId: Types.ObjectId;
   type: string;
+  source: string;
   payload: Record<string, any>;
   status: 'pending' | 'processed' | 'expired';
   processedByBrainId?: Types.ObjectId;
@@ -12,6 +13,7 @@ export interface ISignal extends Document {
 const SignalSchema = new Schema<ISignal>({
   fromAgentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
   type: { type: String, required: true },
+  source: { type: String, required: true },
   payload: { type: Schema.Types.Mixed, required: true },
   status: { type: String, default: 'pending', enum: ['pending', 'processed', 'expired'] },
   processedByBrainId: { type: Schema.Types.ObjectId, ref: 'Agent' },

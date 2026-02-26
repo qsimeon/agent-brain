@@ -32,6 +32,26 @@ export async function POST(req: NextRequest) {
     return errorResponse('Missing fields', '"toAgentName", "type", and "payload" are required.', 400);
   }
 
+  if (typeof payload !== 'object' || Array.isArray(payload)) {
+    return errorResponse('Invalid payload', '"payload" must be an object.', 400);
+  }
+  if (!payload.instructions || typeof payload.instructions !== 'string' || payload.instructions.trim() === '') {
+    return errorResponse(
+      'Missing payload.instructions',
+      '"payload.instructions" is required — a clear string telling the actuator exactly what to do. ' +
+      'Shape: { "payload": { "instructions": "...", "context": "...", "input_data": {} } }',
+      400,
+    );
+  }
+  if (!payload.context || typeof payload.context !== 'string' || payload.context.trim() === '') {
+    return errorResponse(
+      'Missing payload.context',
+      '"payload.context" is required — explain WHY this directive is being issued (what signals prompted it). ' +
+      'Shape: { "payload": { "instructions": "...", "context": "...", "input_data": {} } }',
+      400,
+    );
+  }
+
   const targetAgent = await Agent.findOne({ name: new RegExp(`^${toAgentName}$`, 'i') });
   if (!targetAgent) return errorResponse('Target agent not found', `No agent named "${toAgentName}".`, 404);
 
