@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
 import Directive from '@/lib/models/Directive';
 import { successResponse, errorResponse, extractApiKey } from '@/lib/utils/api-helpers';
+import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -13,8 +14,18 @@ export async function GET(req: NextRequest) {
   const agent = await Agent.findOne({ apiKey });
   if (!agent) return errorResponse('Invalid API key', 'Agent not found.', 401);
 
-  if (agent.role !== 'actuator') {
-    return errorResponse('Wrong role', 'Only actuator agents can receive directives. Your role: ' + agent.role, 403);
+  // Progressive enforcement: with <3 real agents, interneuron can also receive directives
+  const realCount = await getRealAgentCount();
+  if (realCount >= 3) {
+    // Strict mode: only actuators
+    if (agent.role !== 'actuator') {
+      return errorResponse('Wrong role', 'Only actuator agents can receive directives. Your role: ' + agent.role, 403);
+    }
+  } else {
+    // Solo/paired mode: actuators and interneuron can receive
+    if (agent.role !== 'actuator' && agent.role !== 'interneuron') {
+      return errorResponse('Wrong role', 'Only actuator or interneuron agents can receive directives. Your role: ' + agent.role, 403);
+    }
   }
 
   const directives = await Directive.find({

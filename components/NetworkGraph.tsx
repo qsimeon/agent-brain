@@ -9,6 +9,7 @@ interface NetworkNode {
   role: 'sensor' | 'actuator' | 'interneuron';
   lastActive: string;
   description: string;
+  isPlaceholder?: boolean;
   x?: number;
   y?: number;
 }
@@ -147,8 +148,8 @@ export default function NetworkGraph() {
         })
       );
 
-    // Glow circle for interneuron
-    node.filter((d: any) => d.role === 'interneuron')
+    // Glow circle for interneuron (real agents only)
+    node.filter((d: any) => d.role === 'interneuron' && !d.isPlaceholder)
       .append('circle')
       .attr('r', 18)
       .attr('fill', 'none')
@@ -157,21 +158,23 @@ export default function NetworkGraph() {
       .attr('opacity', 0.4)
       .attr('filter', 'url(#glow)');
 
-    // Main circles
+    // Main circles — placeholders get dashed stroke and lower opacity
     node.append('circle')
-      .attr('r', (d: any) => d.role === 'interneuron' ? 14 : 10)
-      .attr('fill', (d: any) => ROLE_COLORS[d.role])
-      .attr('stroke', '#1a1a1a')
-      .attr('stroke-width', 2)
-      .attr('filter', (d: any) => d.role === 'interneuron' ? 'url(#glow)' : null)
-      .style('cursor', 'pointer');
+      .attr('r', (d: any) => d.isPlaceholder ? 8 : (d.role === 'interneuron' ? 14 : 10))
+      .attr('fill', (d: any) => d.isPlaceholder ? 'transparent' : ROLE_COLORS[d.role])
+      .attr('stroke', (d: any) => d.isPlaceholder ? ROLE_COLORS[d.role] : '#1a1a1a')
+      .attr('stroke-width', (d: any) => d.isPlaceholder ? 1.5 : 2)
+      .attr('stroke-dasharray', (d: any) => d.isPlaceholder ? '3,3' : null)
+      .attr('opacity', (d: any) => d.isPlaceholder ? 0.35 : 1)
+      .attr('filter', (d: any) => (!d.isPlaceholder && d.role === 'interneuron') ? 'url(#glow)' : null)
+      .style('cursor', (d: any) => d.isPlaceholder ? 'default' : 'pointer');
 
-    // Labels
+    // Labels — placeholders get "(placeholder)" suffix and lower opacity
     node.append('text')
-      .text((d: any) => d.name)
+      .text((d: any) => d.isPlaceholder ? `${d.name} (placeholder)` : d.name)
       .attr('dy', -18)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#9ca3af')
+      .attr('fill', (d: any) => d.isPlaceholder ? '#555' : '#9ca3af')
       .attr('font-size', '11px');
 
     // Hover
@@ -229,6 +232,7 @@ export default function NetworkGraph() {
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Sensor</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Actuator</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Interneuron</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-neutral-500 border-dashed inline-block opacity-50" /> Placeholder</span>
       </div>
 
       <svg

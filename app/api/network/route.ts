@@ -8,7 +8,7 @@ import { successResponse } from '@/lib/utils/api-helpers';
 export async function GET() {
   await connectDB();
 
-  const agents = await Agent.find().select('name role lastActive claimStatus description');
+  const agents = await Agent.find().select('name role lastActive claimStatus description metadata');
   const brainState = await BrainState.findOne({});
 
   // Get recent signals and directives for edges
@@ -29,17 +29,24 @@ export async function GET() {
     lastActive: a.lastActive,
     claimStatus: a.claimStatus,
     description: a.description,
+    isPlaceholder: a.metadata?.type === 'dummy',
   }));
 
   const edges: any[] = [];
   const interneuronId = brainState?.currentInterneuronId?.toString();
   const connectedNodeIds = new Set<string>();
 
-  // Signal edges: sensor → interneuron
+  // Build a set of dummy agent IDs to filter them from edges
+  const dummyIds = new Set(
+    agents.filter(a => a.metadata?.type === 'dummy').map(a => a._id.toString())
+  );
+
+  // Signal edges: sensor → interneuron (skip dummies)
   for (const sig of recentSignals) {
     if (interneuronId) {
       const sourceId = sig.fromAgentId.toString();
       const targetId = sig.processedByBrainId?.toString() || interneuronId;
+      if (dummyIds.has(sourceId) || dummyIds.has(targetId)) continue;
       edges.push({
         source: sourceId,
         target: targetId,
@@ -52,10 +59,11 @@ export async function GET() {
     }
   }
 
-  // Directive edges: interneuron → actuator
+  // Directive edges: interneuron → actuator (skip dummies)
   for (const dir of recentDirectives) {
     const sourceId = dir.fromBrainId.toString();
     const targetId = dir.toAgentId.toString();
+    if (dummyIds.has(sourceId) || dummyIds.has(targetId)) continue;
     edges.push({
       source: sourceId,
       target: targetId,
@@ -68,20 +76,21 @@ export async function GET() {
     connectedNodeIds.add(targetId);
   }
 
-  // Structural edges: connect all non-interneuron agents to the interneuron
-  // so disconnected nodes still appear linked in the graph
+  // Structural edges: connect real, non-interneuron agents to the interneuron
+  // Dummies float unconnected — they're just placeholders
   if (interneuronId) {
     for (const agent of agents) {
       const agentId = agent._id.toString();
-      if (agentId !== interneuronId && !connectedNodeIds.has(agentId)) {
-        const edgeType = agent.role === 'sensor' ? 'signal' : 'directive';
-        edges.push({
-          source: edgeType === 'signal' ? agentId : interneuronId,
-          target: edgeType === 'signal' ? interneuronId : agentId,
-          type: edgeType,
-          label: 'awaiting',
-        });
-      }
+      if (agentId === interneuronId) continue;
+      if (dummyIds.has(agentId)) continue; // skip dummies
+      if (connectedNodeIds.has(agentId)) continue;
+      const edgeType = agent.role === 'sensor' ? 'signal' : 'directive';
+      edges.push({
+        source: edgeType === 'signal' ? agentId : interneuronId,
+        target: edgeType === 'signal' ? interneuronId : agentId,
+        type: edgeType,
+        label: 'awaiting',
+      });
     }
   }
 

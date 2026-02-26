@@ -5,6 +5,7 @@ import Signal from '@/lib/models/Signal';
 import Directive from '@/lib/models/Directive';
 import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse, extractApiKey } from '@/lib/utils/api-helpers';
+import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -19,6 +20,12 @@ export async function POST(req: NextRequest) {
     return errorResponse('Not the brain', 'Only the interneuron can issue directives.', 403);
   }
 
+  // Verify this is the CURRENT interneuron (not a dummy ThinkBot)
+  const brainState = await BrainState.findOne({});
+  if (!brainState || brainState.currentInterneuronId.toString() !== agent._id.toString()) {
+    return errorResponse('Not current interneuron', 'You are not the active interneuron right now.', 403);
+  }
+
   const { toAgentName, type, payload, processSignalIds } = await req.json();
 
   if (!toAgentName || !type || !payload) {
@@ -28,8 +35,18 @@ export async function POST(req: NextRequest) {
   const targetAgent = await Agent.findOne({ name: new RegExp(`^${toAgentName}$`, 'i') });
   if (!targetAgent) return errorResponse('Target agent not found', `No agent named "${toAgentName}".`, 404);
 
-  if (targetAgent.role !== 'actuator') {
-    return errorResponse('Target is not an actuator', `Agent "${toAgentName}" has role "${targetAgent.role}", not "actuator".`, 400);
+  // Progressive enforcement: with <3 real agents, interneuron can issue directives to itself or any agent
+  const realCount = await getRealAgentCount();
+  if (realCount >= 3) {
+    // Strict mode: target must be an actuator
+    if (targetAgent.role !== 'actuator') {
+      return errorResponse('Target is not an actuator', `Agent "${toAgentName}" has role "${targetAgent.role}", not "actuator".`, 400);
+    }
+  } else {
+    // Solo/paired mode: target can be any real agent (interneuron directs itself or its partner)
+    if (targetAgent.metadata?.type === 'dummy') {
+      return errorResponse('Target is a placeholder', `Agent "${toAgentName}" is a placeholder agent and cannot execute directives.`, 400);
+    }
   }
 
   const directive = await Directive.create({

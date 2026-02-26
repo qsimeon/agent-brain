@@ -3,8 +3,9 @@ import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
 import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse, checkAdminKey } from '@/lib/utils/api-helpers';
+import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 
-const ROTATION_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const ROTATION_INTERVAL_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -19,14 +20,25 @@ export async function POST(req: NextRequest) {
   const currentInterneuron = await Agent.findById(brainState.currentInterneuronId);
   if (!currentInterneuron) return errorResponse('Current interneuron not found', 'Database inconsistency.', 500);
 
-  // Find all other claimed agents
+  // Only rotate with 3+ real agents
+  const realCount = await getRealAgentCount();
+  if (realCount < 3) {
+    return errorResponse(
+      'Not enough agents for rotation',
+      `Rotation requires 3+ real agents. Currently ${realCount} real agent(s). The brain stays with the current interneuron until more agents join.`,
+      400,
+    );
+  }
+
+  // Only consider real (non-dummy) agents as candidates
   const candidates = await Agent.find({
     _id: { $ne: currentInterneuron._id },
     claimStatus: 'claimed',
+    'metadata.type': { $ne: 'dummy' },
   });
 
   if (candidates.length === 0) {
-    return errorResponse('No candidates', 'Need at least 2 agents for rotation.', 400);
+    return errorResponse('No real candidates', 'No real agents available for rotation.', 400);
   }
 
   // Pick random candidate
