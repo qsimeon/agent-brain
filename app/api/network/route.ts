@@ -8,7 +8,7 @@ import { successResponse } from '@/lib/utils/api-helpers';
 export async function GET() {
   await connectDB();
 
-  const agents = await Agent.find().select('name role lastActive claimStatus description metadata');
+  const agents = await Agent.find().select('name role lastActive claimStatus description metadata skills');
   const brainState = await BrainState.findOne({});
 
   // Get recent signals and directives for edges
@@ -30,6 +30,8 @@ export async function GET() {
     claimStatus: a.claimStatus,
     description: a.description,
     isPlaceholder: a.metadata?.type === 'dummy',
+    sensingCount: a.skills?.sensing?.length || 0,
+    actingCount: a.skills?.acting?.length || 0,
   }));
 
   const edges: any[] = [];

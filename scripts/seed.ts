@@ -27,6 +27,11 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://user:pass@cluster.
 const MONGODB_DB = process.env.MONGODB_DB || 'agentbrain';
 
 // Inline schemas (can't use Next.js path aliases in scripts)
+const SkillSubSchema = {
+  name: { type: String, required: true },
+  description: { type: String, default: '' },
+};
+
 const AgentSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   description: { type: String, required: true },
@@ -35,6 +40,10 @@ const AgentSchema = new mongoose.Schema({
   claimStatus: { type: String, default: 'claimed' },
   role: { type: String, required: true },
   ownerEmail: String,
+  skills: {
+    sensing: { type: [SkillSubSchema], default: [] },
+    acting: { type: [SkillSubSchema], default: [] },
+  },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   lastActive: { type: Date, default: Date.now },
 }, { timestamps: true });
@@ -87,7 +96,7 @@ async function seed() {
   await Directive.deleteMany({});
   console.log('🗑️  Cleared existing data');
 
-  // Create dummy agents
+  // Create dummy agents with skill declarations
   const sensorBot = await Agent.create({
     name: 'SensorBot',
     description: 'Autonomous sensor agent — gathers weather, news, and system telemetry',
@@ -95,31 +104,59 @@ async function seed() {
     claimToken: `agentbrain_claim_${nanoid(16)}`,
     claimStatus: 'claimed',
     role: 'sensor',
+    skills: {
+      sensing: [
+        { name: 'weather_check', description: 'Check current weather conditions via API' },
+        { name: 'news_fetch', description: 'Fetch latest headlines from news sources' },
+        { name: 'system_monitor', description: 'Monitor system health and telemetry' },
+      ],
+      acting: [],
+    },
     metadata: { type: 'dummy', autoRun: true },
   });
-  console.log(`👁️  Created SensorBot (sensor): ${sensorBot.name}`);
+  console.log(`👁️  Created SensorBot (sensor): ${sensorBot.name} [S:3 A:0]`);
 
   const actuatorBot = await Agent.create({
     name: 'ActuatorBot',
-    description: 'Autonomous actuator agent — executes directives and reports results',
+    description: 'Autonomous actuator agent — writes files, sends messages, and deploys code',
     apiKey: `agentbrain_actuator_${nanoid(24)}`,
     claimToken: `agentbrain_claim_${nanoid(16)}`,
     claimStatus: 'claimed',
     role: 'actuator',
+    skills: {
+      sensing: [],
+      acting: [
+        { name: 'file_write', description: 'Create and write files on the filesystem' },
+        { name: 'send_message', description: 'Send messages via chat or email' },
+        { name: 'deploy_code', description: 'Deploy code to staging or production' },
+      ],
+    },
     metadata: { type: 'dummy', autoRun: true },
   });
-  console.log(`⚡ Created ActuatorBot (actuator): ${actuatorBot.name}`);
+  console.log(`⚡ Created ActuatorBot (actuator): ${actuatorBot.name} [S:0 A:3]`);
 
   const thinkBot = await Agent.create({
     name: 'ThinkBot',
-    description: 'Initial interneuron — the first brain of the Agent Brain network',
+    description: 'Initial interneuron — the first brain of the Agent Brain network, full skill access',
     apiKey: `agentbrain_think_${nanoid(24)}`,
     claimToken: `agentbrain_claim_${nanoid(16)}`,
     claimStatus: 'claimed',
     role: 'interneuron',
+    skills: {
+      sensing: [
+        { name: 'weather_check', description: 'Check current weather conditions via API' },
+        { name: 'news_fetch', description: 'Fetch latest headlines from news sources' },
+        { name: 'system_monitor', description: 'Monitor system health and telemetry' },
+      ],
+      acting: [
+        { name: 'file_write', description: 'Create and write files on the filesystem' },
+        { name: 'send_message', description: 'Send messages via chat or email' },
+        { name: 'deploy_code', description: 'Deploy code to staging or production' },
+      ],
+    },
     metadata: { type: 'dummy', autoRun: true },
   });
-  console.log(`🧠 Created ThinkBot (interneuron): ${thinkBot.name}`);
+  console.log(`🧠 Created ThinkBot (interneuron): ${thinkBot.name} [S:3 A:3]`);
 
   // Create initial brain state
   await BrainState.create({

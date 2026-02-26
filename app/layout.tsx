@@ -27,6 +27,9 @@ function Header() {
           <Link href="/network" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
             Network
           </Link>
+          <Link href="/outputs" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
+            Outputs
+          </Link>
           <Link href="/dashboard" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
             Dashboard
           </Link>

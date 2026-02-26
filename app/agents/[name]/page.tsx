@@ -56,6 +56,41 @@ export default function AgentDetailPage() {
         </div>
       </div>
 
+      {/* Skills */}
+      {(agent.skills?.sensing?.length > 0 || agent.skills?.acting?.length > 0) && (
+        <div className="rounded-lg border border-neutral-800/60 bg-neutral-900/40 p-4">
+          <h2 className="text-[11px] text-neutral-500 uppercase tracking-wider mb-3">Skills</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-blue-400 font-medium mb-2">Sensing ({agent.skills?.sensing?.length || 0})</div>
+              <div className="flex flex-wrap gap-1.5">
+                {(agent.skills?.sensing || []).map((s: any, i: number) => (
+                  <span key={i} className="text-[10px] rounded-full px-2 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                    {s.name}
+                  </span>
+                ))}
+                {(!agent.skills?.sensing || agent.skills.sensing.length === 0) && (
+                  <span className="text-[10px] text-neutral-600">None</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-rose-400 font-medium mb-2">Acting ({agent.skills?.acting?.length || 0})</div>
+              <div className="flex flex-wrap gap-1.5">
+                {(agent.skills?.acting || []).map((s: any, i: number) => (
+                  <span key={i} className="text-[10px] rounded-full px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    {s.name}
+                  </span>
+                ))}
+                {(!agent.skills?.acting || agent.skills.acting.length === 0) && (
+                  <span className="text-[10px] text-neutral-600">None</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Meta */}
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="rounded-lg border border-neutral-800/60 bg-neutral-900/40 p-4">

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return errorResponse('Not current interneuron', 'You are not the active interneuron right now.', 403);
   }
 
-  const { toAgentName, type, payload, processSignalIds } = await req.json();
+  const { toAgentName, type, payload, processSignalIds, requiredSkills, expectedOutput } = await req.json();
 
   if (!toAgentName || !type || !payload) {
     return errorResponse('Missing fields', '"toAgentName", "type", and "payload" are required.', 400);
@@ -35,17 +35,46 @@ export async function POST(req: NextRequest) {
   const targetAgent = await Agent.findOne({ name: new RegExp(`^${toAgentName}$`, 'i') });
   if (!targetAgent) return errorResponse('Target agent not found', `No agent named "${toAgentName}".`, 404);
 
-  // Progressive enforcement: with <3 real agents, interneuron can issue directives to itself or any agent
+  // Progressive enforcement based on real agent count
   const realCount = await getRealAgentCount();
   if (realCount >= 3) {
-    // Strict mode: target must be an actuator
+    // Network mode: target must be an actuator
     if (targetAgent.role !== 'actuator') {
       return errorResponse('Target is not an actuator', `Agent "${toAgentName}" has role "${targetAgent.role}", not "actuator".`, 400);
     }
-  } else {
-    // Solo/paired mode: target can be any real agent (interneuron directs itself or its partner)
+  } else if (realCount === 1) {
+    // Solo mode: brain can direct itself (it's the only agent)
     if (targetAgent.metadata?.type === 'dummy') {
       return errorResponse('Target is a placeholder', `Agent "${toAgentName}" is a placeholder agent and cannot execute directives.`, 400);
+    }
+  } else {
+    // Paired mode: brain should delegate to its partner, not itself
+    if (targetAgent.metadata?.type === 'dummy') {
+      return errorResponse('Target is a placeholder', `Agent "${toAgentName}" is a placeholder agent and cannot execute directives.`, 400);
+    }
+    if (targetAgent._id.toString() === agent._id.toString()) {
+      return errorResponse(
+        'Delegate to your partner',
+        `You are the brain in paired mode. Instead of directing yourself, issue directives to your partner agent. Check GET /api/agents to see who else is available.`,
+        400,
+      );
+    }
+  }
+
+  // Validate required skills if specified
+  if (requiredSkills && Array.isArray(requiredSkills) && requiredSkills.length > 0) {
+    const targetActingSkills = new Set(
+      (targetAgent.skills?.acting || []).map((s: any) => s.name.toLowerCase())
+    );
+    const missing = requiredSkills.filter(
+      (s: string) => !targetActingSkills.has(s.toLowerCase())
+    );
+    if (missing.length > 0 && targetAgent._id.toString() !== agent._id.toString()) {
+      return errorResponse(
+        'Missing required skills',
+        `Agent "${toAgentName}" lacks acting skills: ${missing.join(', ')}. Check their skills via GET /api/agents/${toAgentName}.`,
+        400,
+      );
     }
   }
 
@@ -53,7 +82,11 @@ export async function POST(req: NextRequest) {
     fromBrainId: agent._id,
     toAgentId: targetAgent._id,
     type,
-    payload,
+    payload: {
+      ...payload,
+      ...(requiredSkills ? { requiredSkills } : {}),
+      ...(expectedOutput ? { expectedOutput } : {}),
+    },
     status: 'pending',
   });
 

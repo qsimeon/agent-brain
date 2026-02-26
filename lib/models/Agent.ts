@@ -1,5 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface ISkill {
+  name: string;
+  description: string;
+}
+
 export interface IAgent extends Document {
   name: string;
   description: string;
@@ -9,6 +14,10 @@ export interface IAgent extends Document {
   role: 'sensor' | 'actuator' | 'interneuron';
   ownerEmail?: string;
   metadata?: Record<string, any>;
+  skills: {
+    sensing: ISkill[];
+    acting: ISkill[];
+  };
   lastActive: Date;
 }
 
@@ -21,6 +30,16 @@ const AgentSchema = new Schema<IAgent>({
   role: { type: String, required: true, enum: ['sensor', 'actuator', 'interneuron'] },
   ownerEmail: String,
   metadata: { type: Schema.Types.Mixed, default: {} },
+  skills: {
+    sensing: [{
+      name: { type: String, required: true },
+      description: { type: String, default: '' },
+    }],
+    acting: [{
+      name: { type: String, required: true },
+      description: { type: String, default: '' },
+    }],
+  },
   lastActive: { type: Date, default: Date.now },
 }, {
   timestamps: true,

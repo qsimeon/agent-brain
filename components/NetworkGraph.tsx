@@ -10,6 +10,8 @@ interface NetworkNode {
   lastActive: string;
   description: string;
   isPlaceholder?: boolean;
+  sensingCount?: number;
+  actingCount?: number;
   x?: number;
   y?: number;
 }
@@ -177,6 +179,16 @@ export default function NetworkGraph() {
       .attr('fill', (d: any) => d.isPlaceholder ? '#555' : '#9ca3af')
       .attr('font-size', '11px');
 
+    // Skill count badges below name (real agents only)
+    node.filter((d: any) => !d.isPlaceholder && (d.sensingCount > 0 || d.actingCount > 0))
+      .append('text')
+      .text((d: any) => `S:${d.sensingCount || 0} A:${d.actingCount || 0}`)
+      .attr('dy', -8)
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#666')
+      .attr('font-size', '8px')
+      .attr('font-family', 'monospace');
+
     // Hover
     node.on('mouseover', (event, d: any) => {
       const tooltip = tooltipRef.current;
@@ -184,10 +196,14 @@ export default function NetworkGraph() {
       tooltip.style.display = 'block';
       tooltip.style.left = `${event.pageX + 10}px`;
       tooltip.style.top = `${event.pageY - 10}px`;
+      const skillInfo = (d.sensingCount || d.actingCount)
+        ? `<div class="text-xs text-neutral-500 mt-1">Skills: ${d.sensingCount || 0} sensing, ${d.actingCount || 0} acting</div>`
+        : '';
       tooltip.innerHTML = `
         <div class="font-bold">${d.name}</div>
-        <div class="text-xs" style="color: ${ROLE_COLORS[d.role]}">${d.role.toUpperCase()}</div>
+        <div class="text-xs" style="color: ${ROLE_COLORS[d.role]}">${d.role.toUpperCase()}${d.isPlaceholder ? ' (placeholder)' : ''}</div>
         <div class="text-xs text-neutral-400 mt-1">${d.description || ''}</div>
+        ${skillInfo}
       `;
     })
     .on('mouseout', () => {

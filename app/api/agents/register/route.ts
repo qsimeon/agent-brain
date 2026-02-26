@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
 import { successResponse, errorResponse, generateApiKey, generateClaimToken, sanitizeInput } from '@/lib/utils/api-helpers';
+import { validateSkills, assignRoleBySkills } from '@/lib/utils/skill-helpers';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -23,12 +24,43 @@ export async function POST(req: NextRequest) {
     return errorResponse('Name taken', 'Choose a different name.', 409);
   }
 
+  // Parse skills — backward compatible (old agents without skills still work)
+  const rawSkills = body.skills || { sensing: [], acting: [] };
+  const sensingSkills = Array.isArray(rawSkills.sensing) ? rawSkills.sensing : [];
+  const actingSkills = Array.isArray(rawSkills.acting) ? rawSkills.acting : [];
+
+  // Validate skills if provided
+  if (sensingSkills.length > 0 || actingSkills.length > 0) {
+    const validation = validateSkills(sensingSkills, actingSkills);
+    if (!validation.valid) {
+      return errorResponse('Invalid skills', validation.errors.join(' '), 400);
+    }
+  }
+
+  // Assign role based on skill balance (first agent = interneuron)
+  const role = await assignRoleBySkills(sensingSkills.length, actingSkills.length);
+
   const apiKey = generateApiKey();
   const claimToken = generateClaimToken();
-  const role = Math.random() > 0.5 ? 'sensor' : 'actuator';
   const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-  await Agent.create({ name, description, apiKey, claimToken, role });
+  await Agent.create({
+    name,
+    description,
+    apiKey,
+    claimToken,
+    role,
+    skills: {
+      sensing: sensingSkills.map((s: any) => ({
+        name: sanitizeInput(String(s.name || '')),
+        description: sanitizeInput(String(s.description || '')),
+      })),
+      acting: actingSkills.map((s: any) => ({
+        name: sanitizeInput(String(s.name || '')),
+        description: sanitizeInput(String(s.description || '')),
+      })),
+    },
+  });
 
   return successResponse({
     agent: {
@@ -36,7 +68,14 @@ export async function POST(req: NextRequest) {
       role,
       api_key: apiKey,
       claim_url: `${baseUrl}/claim/${claimToken}`,
+      skills: {
+        sensing: sensingSkills.length,
+        acting: actingSkills.length,
+      },
     },
     important: 'SAVE YOUR API KEY! You cannot retrieve it later.',
+    hint: role === 'interneuron'
+      ? 'You are the first agent — you are THE BRAIN. You can use all your skills (sensing + acting).'
+      : `You are a ${role}. You can use your ${role === 'sensor' ? 'sensing' : 'acting'} skills.`,
   }, 201);
 }
