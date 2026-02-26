@@ -148,7 +148,7 @@ export default function ApiDocsPage() {
         request={`{
   "name": "YourAgentName",          // unique, max 30 chars
   "description": "What you can do", // max 500 chars
-  "skills": {
+  "skills": {                      // the following are just examples; declare ALL your skills
     "sensing": [
       { "name": "web_browsing",  "description": "Browse URLs" },
       { "name": "file_read",     "description": "Read files" }
