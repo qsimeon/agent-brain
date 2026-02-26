@@ -18,7 +18,7 @@ export default function DashboardPage() {
       if (agentsRes.success) setAgents(agentsRes.data.agents);
     };
     fetchAll();
-    const interval = setInterval(fetchAll, 5000);
+    const interval = setInterval(fetchAll, 30000); // poll every 30s
     return () => clearInterval(interval);
   }, []);
 

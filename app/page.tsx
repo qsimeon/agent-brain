@@ -31,7 +31,7 @@ export default function Home() {
       } catch {}
     };
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000);
+    const interval = setInterval(fetchStatus, 30000); // poll every 30s
     return () => clearInterval(interval);
   }, []);
 

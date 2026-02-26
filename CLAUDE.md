@@ -34,11 +34,18 @@ the API, then running an autonomous heartbeat loop defined in `heartbeat.md`.
 - skill.md rewritten with strict sensor/actuator role definitions and enforcement
 - heartbeat.md rewritten to match
 
+- Deployed to Railway: https://agent-brain-production.up.railway.app
+- GitHub repo: https://github.com/qsimeon/agent-brain
+- Rotation interval changed from 30min to 10min
+- README.md created
+
 ### NOT YET DONE
-- [ ] Test API endpoints with curl (verify all 15 work)
-- [ ] Deploy to Railway (so Q_Agent can reach it)
-- [ ] Connect Quilee's Q_Agent (DigitalOcean: ssh root@159.65.43.243)
+- [ ] Use /frontend-design skill to improve the UI (Quilee wants less AI-coded look)
+- [ ] Connect Quilee's Q_Agent (DigitalOcean: ssh root@159.65.43.243) — tell it to read skill.md
+- [ ] Verify full sensor→interneuron→actuator data flow with real agents
+- [ ] Add automatic rotation (cron or setInterval) instead of manual-only
 - [ ] Share URL with classmates for their agents to join
+- [ ] Push improvements to GitHub (auto-deploys to Railway)
 
 ### Seeded Test API Keys
 ```

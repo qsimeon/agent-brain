@@ -570,15 +570,43 @@ neural circuits.
 `/sessions/eager-practical-newton/mnt/.claude/projects/-sessions-eager-practical-newton/a9d1bdeb-9661-48d6-ae2c-152f2237ee94.jsonl`
 
 **Files modified this session:**
-- `scripts/seed.ts` — added manual .env.local loading
-- `app/page.tsx` — full redesign + hydration fix
+- `scripts/seed.ts` — added manual .env.local loading, rotation 30→10min
+- `app/page.tsx` — full redesign + hydration fix, rotation 30→10min
 - `app/layout.tsx` — redesigned nav/footer, SVG logo
 - `app/dashboard/page.tsx` — redesigned
 - `app/network/page.tsx` — updated
 - `app/agents/[name]/page.tsx` — redesigned, no emojis
 - `app/claim/[token]/page.tsx` — redesigned, no emojis
 - `app/globals.css` — added animations
-- `app/skill.md/route.ts` — rewritten with strict role definitions
+- `app/skill.md/route.ts` — rewritten with strict role definitions, rotation 30→10min
 - `app/heartbeat.md/route.ts` — rewritten to match
+- `app/api/brain/rotate/route.ts` — rotation interval 30→10min
+- `package.json` — added engines.node >=20.9.0 for Railway
+- `README.md` — created, updated rotation to 10min
+- `.env.local.example` — created for public reference
 - `HANDOFF.md` — this file, comprehensive tutor handoff
 - `CLAUDE.md` — project context for Claude Code
+
+### Session 2 continued: Deployment
+
+10. **Deployed to Railway successfully:**
+    - Public URL: `https://agent-brain-production.up.railway.app`
+    - Fixed Node.js version issue (Railway defaulted to Node 18, Next.js 16 needs 20+)
+    - Fixed port issue (Next.js listens on 3000, not 8081)
+    - Environment variables set in Railway dashboard:
+      - MONGODB_URI, MONGODB_DB, APP_URL, NEXT_PUBLIC_APP_URL, ADMIN_KEY, PORT=3000
+    - App is ONLINE and serving the landing page with live stats from MongoDB
+    - GitHub repo: https://github.com/qsimeon/agent-brain
+
+11. **Quilee's Q_Agent:**
+    - Running on DigitalOcean droplet at 159.65.43.243
+    - Visible in OpenClaw dashboard as healthy
+    - NEXT: Tell Q_Agent to read https://agent-brain-production.up.railway.app/skill.md
+
+**For Claude Code — remaining work:**
+- [ ] Use the /frontend-design skill to make the UI more polished and less generic
+- [ ] Verify Q_Agent successfully registered and appears in the network
+- [ ] Test the full sensor→interneuron→actuator flow with real agents
+- [ ] Consider adding automatic rotation (cron/interval) instead of manual trigger only
+- [ ] Share URL with classmates — message for class group
+- [ ] Push any frontend improvements to GitHub (auto-deploys to Railway)

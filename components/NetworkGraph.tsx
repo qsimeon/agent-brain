@@ -52,7 +52,7 @@ export default function NetworkGraph() {
       } catch {}
     };
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 30000); // poll every 30s
     return () => clearInterval(interval);
   }, []);
 
@@ -62,7 +62,7 @@ export default function NetworkGraph() {
     const update = () => {
       const diff = new Date(data.brainState!.nextRotationAt).getTime() - Date.now();
       if (diff <= 0) {
-        setCountdown('Rotating...');
+        setCountdown('Awaiting rotation');
         return;
       }
       const min = Math.floor(diff / 60000);
