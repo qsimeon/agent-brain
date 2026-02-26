@@ -1,7 +1,10 @@
 node_modules
 .next
+.next-build
 .env.local
 .env
 HANDOFF.md
 CLAUDE.md
 STATUS.md
+tsconfig.tsbuildinfo
+next-env.d.ts
