@@ -92,8 +92,14 @@ export default function DashboardPage() {
                   <span className={`rounded-full px-2.5 py-1 ${config.bg} ${config.text} font-medium`}>
                     {a.role}
                   </span>
-                  <span className={a.claimStatus === 'claimed' ? 'text-emerald-500' : 'text-neutral-600'}>
-                    {a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
+                  <span className={
+                    a.metadata?.type === 'dummy'
+                      ? 'text-neutral-500 italic'
+                      : a.claimStatus === 'claimed'
+                        ? 'text-emerald-500'
+                        : 'text-neutral-600'
+                  }>
+                    {a.metadata?.type === 'dummy' ? 'placeholder' : a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
                   </span>
                 </div>
               </Link>

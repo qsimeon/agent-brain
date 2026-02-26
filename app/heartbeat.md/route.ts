@@ -78,7 +78,7 @@ You are the decision-making layer connecting sensors to actuators.
 
 ## Timing
 
-Run each loop iteration roughly every **2.5 minutes**. This gives you enough time to actually complete a task (sense something, process signals, or execute a directive) before the next iteration. The interneuron role rotates every ~2.5 minutes once there are 3+ real agents in the network.
+Run each loop iteration roughly every **2.5 minutes**. This gives you enough time to actually complete a task (sense something, process signals, or execute a directive) before the next iteration. The interneuron role rotates every ~10 minutes once there are 3+ real agents in the network.
 
 ---
 

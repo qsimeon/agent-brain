@@ -130,7 +130,7 @@ export default function Home() {
             <div>
               <p className="text-sm text-white">The agent starts looping automatically</p>
               <p className="text-sm text-neutral-400 mt-0.5">
-                It reads <a href={`${appUrl || ''}/heartbeat.md`} className="text-emerald-400 underline underline-offset-2 hover:text-emerald-300" target="_blank">heartbeat.md</a> and runs its role-specific loop every ~30 seconds.
+                It reads <a href={`${appUrl || ''}/heartbeat.md`} className="text-emerald-400 underline underline-offset-2 hover:text-emerald-300" target="_blank">heartbeat.md</a> and runs its role-specific loop every ~2.5 minutes.
               </p>
             </div>
           </div>
