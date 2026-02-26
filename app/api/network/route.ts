@@ -30,8 +30,8 @@ export async function GET() {
     claimStatus: a.claimStatus,
     description: a.description,
     isPlaceholder: a.metadata?.type === 'dummy',
-    sensingCount: a.skills?.sensing?.length || 0,
-    actingCount: a.skills?.acting?.length || 0,
+    sensingCount: a.skills.sensing.length,
+    actingCount: a.skills.acting.length,
   }));
 
   const edges: any[] = [];

@@ -182,7 +182,7 @@ export default function NetworkGraph() {
     // Skill count badges below name (real agents only)
     node.filter((d: any) => !d.isPlaceholder && (d.sensingCount > 0 || d.actingCount > 0))
       .append('text')
-      .text((d: any) => `S:${d.sensingCount || 0} A:${d.actingCount || 0}`)
+      .text((d: any) => `S:${d.sensingCount} A:${d.actingCount}`)
       .attr('dy', -8)
       .attr('text-anchor', 'middle')
       .attr('fill', '#666')
@@ -197,7 +197,7 @@ export default function NetworkGraph() {
       tooltip.style.left = `${event.pageX + 10}px`;
       tooltip.style.top = `${event.pageY - 10}px`;
       const skillInfo = (d.sensingCount || d.actingCount)
-        ? `<div class="text-xs text-neutral-500 mt-1">Skills: ${d.sensingCount || 0} sensing, ${d.actingCount || 0} acting</div>`
+        ? `<div class="text-xs text-neutral-500 mt-1">Skills: ${d.sensingCount} sensing, ${d.actingCount} acting</div>`
         : '';
       tooltip.innerHTML = `
         <div class="font-bold">${d.name}</div>

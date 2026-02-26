@@ -41,8 +41,11 @@ const AgentSchema = new mongoose.Schema({
   role: { type: String, required: true },
   ownerEmail: String,
   skills: {
-    sensing: { type: [SkillSubSchema], default: [] },
-    acting: { type: [SkillSubSchema], default: [] },
+    type: {
+      sensing: { type: [SkillSubSchema], default: [] },
+      acting: { type: [SkillSubSchema], default: [] },
+    },
+    required: true,
   },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   lastActive: { type: Date, default: Date.now },

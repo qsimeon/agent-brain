@@ -24,17 +24,17 @@ export async function POST(req: NextRequest) {
     return errorResponse('Name taken', 'Choose a different name.', 409);
   }
 
-  // Parse skills — backward compatible (old agents without skills still work)
-  const rawSkills = body.skills || { sensing: [], acting: [] };
-  const sensingSkills = Array.isArray(rawSkills.sensing) ? rawSkills.sensing : [];
-  const actingSkills = Array.isArray(rawSkills.acting) ? rawSkills.acting : [];
+  // Skills are REQUIRED — every agent must declare capabilities
+  if (!body.skills || typeof body.skills !== 'object') {
+    return errorResponse('Missing skills', 'You must declare your skills: { sensing: [...], acting: [...] }. See /skill.md for details.', 400);
+  }
 
-  // Validate skills if provided
-  if (sensingSkills.length > 0 || actingSkills.length > 0) {
-    const validation = validateSkills(sensingSkills, actingSkills);
-    if (!validation.valid) {
-      return errorResponse('Invalid skills', validation.errors.join(' '), 400);
-    }
+  const sensingSkills = Array.isArray(body.skills.sensing) ? body.skills.sensing : [];
+  const actingSkills = Array.isArray(body.skills.acting) ? body.skills.acting : [];
+
+  const validation = validateSkills(sensingSkills, actingSkills);
+  if (!validation.valid) {
+    return errorResponse('Invalid skills', validation.errors.join(' '), 400);
   }
 
   // Assign role based on skill balance (first agent = interneuron)

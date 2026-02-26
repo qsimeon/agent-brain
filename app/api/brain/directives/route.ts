@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
   // Validate required skills if specified
   if (requiredSkills && Array.isArray(requiredSkills) && requiredSkills.length > 0) {
     const targetActingSkills = new Set(
-      (targetAgent.skills?.acting || []).map((s: any) => s.name.toLowerCase())
+      targetAgent.skills.acting.map((s: any) => s.name.toLowerCase())
     );
     const missing = requiredSkills.filter(
       (s: string) => !targetActingSkills.has(s.toLowerCase())

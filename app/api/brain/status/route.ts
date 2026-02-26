@@ -30,8 +30,8 @@ export async function GET() {
   }).select('skills');
   const totalSkills = { sensing: 0, acting: 0 };
   for (const a of realAgentDocs) {
-    totalSkills.sensing += a.skills?.sensing?.length || 0;
-    totalSkills.acting += a.skills?.acting?.length || 0;
+    totalSkills.sensing += a.skills.sensing.length;
+    totalSkills.acting += a.skills.acting.length;
   }
 
   // Network mode mirrors biological nervous system evolution

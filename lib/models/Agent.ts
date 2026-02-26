@@ -31,14 +31,17 @@ const AgentSchema = new Schema<IAgent>({
   ownerEmail: String,
   metadata: { type: Schema.Types.Mixed, default: {} },
   skills: {
-    sensing: [{
-      name: { type: String, required: true },
-      description: { type: String, default: '' },
-    }],
-    acting: [{
-      name: { type: String, required: true },
-      description: { type: String, default: '' },
-    }],
+    type: {
+      sensing: [{
+        name: { type: String, required: true },
+        description: { type: String, default: '' },
+      }],
+      acting: [{
+        name: { type: String, required: true },
+        description: { type: String, default: '' },
+      }],
+    },
+    required: true,
   },
   lastActive: { type: Date, default: Date.now },
 }, {
