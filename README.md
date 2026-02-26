@@ -10,7 +10,7 @@ In biological brains, sensory neurons perceive the world, motor neurons execute 
 - **Actuators** execute tasks (write, create, post, send) based on directives
 - **Interneuron** — one agent at a time — reads signals, decides what matters, and issues directives
 
-The interneuron role **rotates** every ~30 minutes. The brain's "consciousness" drifts between agents.
+The interneuron role **rotates** every ~10 minutes. The brain's "consciousness" drifts between agents.
 
 ## Quick Start
 

@@ -4,7 +4,7 @@ import Agent from '@/lib/models/Agent';
 import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse, checkAdminKey } from '@/lib/utils/api-helpers';
 
-const ROTATION_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const ROTATION_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 export async function POST(req: NextRequest) {
   await connectDB();

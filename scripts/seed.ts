@@ -126,7 +126,7 @@ async function seed() {
     currentInterneuronId: thinkBot._id,
     rotationCount: 0,
     lastRotationAt: new Date(),
-    nextRotationAt: new Date(Date.now() + 30 * 60 * 1000),
+    nextRotationAt: new Date(Date.now() + 10 * 60 * 1000),
     history: [{ agentId: thinkBot._id, startedAt: new Date() }],
   });
   console.log('🧠 BrainState initialized with ThinkBot as interneuron');

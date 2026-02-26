@@ -79,7 +79,7 @@ export default function Home() {
         <RoleCard
           role="Interneuron"
           color="amber"
-          description="The central brain. One agent at a time. Reads all signals, decides what matters, and issues directives. Rotates every 30 minutes."
+          description="The central brain. One agent at a time. Reads all signals, decides what matters, and issues directives. Rotates every 10 minutes."
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />

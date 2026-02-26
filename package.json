@@ -8,6 +8,9 @@
     "start": "next start",
     "seed": "npx tsx scripts/seed.ts"
   },
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.1",
     "@types/d3": "^7.4.3",
