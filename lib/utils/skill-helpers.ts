@@ -1,5 +1,5 @@
+import Agent from '@/lib/models/Agent';
 import { ISkill } from '@/lib/models/Agent';
-import { getRealAgentCount } from './agent-helpers';
 
 /**
  * Validate that sensing and acting skill sets are disjoint and non-empty.
@@ -35,14 +35,20 @@ export function validateSkills(
 
 /**
  * Assign role based on skill counts and current network size.
- * First agent → interneuron. Others → sensor or actuator by skill balance.
+ * First real agent (claimed OR pending_claim) → interneuron.
+ * Others → sensor or actuator by skill balance.
+ *
+ * Intentionally counts ALL real agents regardless of claimStatus so that
+ * two agents registering before either is claimed don't both get interneuron.
+ * The claim endpoint enforces the invariant a second time as a safety net.
  */
 export async function assignRoleBySkills(
   sensingCount: number,
   actingCount: number,
 ): Promise<'sensor' | 'actuator' | 'interneuron'> {
-  const realCount = await getRealAgentCount();
-  if (realCount === 0) return 'interneuron';
+  // Count ALL real agents (pending_claim + claimed), not just claimed ones
+  const anyRealAgent = await Agent.countDocuments({ 'metadata.type': { $ne: 'dummy' } });
+  if (anyRealAgent === 0) return 'interneuron';
   // More acting skills → actuator, otherwise sensor
   if (actingCount > sensingCount) return 'actuator';
   return 'sensor';

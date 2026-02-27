@@ -61,6 +61,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     );
 
     console.log(`First real agent claimed: ${agent.name} promoted to interneuron`);
+  } else if (agent.role === 'interneuron') {
+    // Safety net: this agent was incorrectly assigned interneuron during registration
+    // (can happen if two agents register before either is claimed — both see realCount=0).
+    // A real interneuron already exists — downgrade based on skill balance.
+    const sensingCount = agent.skills?.sensing?.length ?? 0;
+    const actingCount = agent.skills?.acting?.length ?? 0;
+    agent.role = actingCount > sensingCount ? 'actuator' : 'sensor';
+    console.log(`Dual-interneuron prevented: ${agent.name} downgraded to ${agent.role}`);
   }
 
   await agent.save();

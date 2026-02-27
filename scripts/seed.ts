@@ -18,15 +18,15 @@ try {
       }
     }
   }
-  console.log('📄 Loaded .env.local');
+  console.log('Loaded .env.local');
 } catch {
-  console.log('⚠️  No .env.local found, using environment variables');
+  console.log('No .env.local found, using environment variables');
 }
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://user:pass@cluster.mongodb.net';
 const MONGODB_DB = process.env.MONGODB_DB || 'agentbrain';
 
-// Inline schemas (can't use Next.js path aliases in scripts)
+// Inline schemas — kept in sync with lib/models/
 const SkillSubSchema = {
   name: { type: String, required: true },
   description: { type: String, default: '' },
@@ -63,14 +63,17 @@ const BrainStateSchema = new mongoose.Schema({
   }],
 }, { timestamps: true });
 
+// Signal schema matches lib/models/Signal.ts — source field is required
 const SignalSchema = new mongoose.Schema({
   fromAgentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
   type: { type: String, required: true },
+  source: { type: String, required: true },
   payload: { type: mongoose.Schema.Types.Mixed, required: true },
   status: { type: String, default: 'pending' },
   processedByBrainId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
 }, { timestamps: true });
 
+// Directive schema — payload must have instructions + context
 const DirectiveSchema = new mongoose.Schema({
   fromBrainId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
   toAgentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
@@ -82,25 +85,39 @@ const DirectiveSchema = new mongoose.Schema({
   completedAt: Date,
 }, { timestamps: true });
 
+const ArtifactSchema = new mongoose.Schema({
+  directiveId: { type: mongoose.Schema.Types.ObjectId, ref: 'Directive' },
+  agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
+  type: { type: String, required: true, enum: ['image', 'text', 'link', 'file'] },
+  title: { type: String, required: true },
+  description: String,
+  url: String,
+  thumbnail: String,
+  content: String,
+}, { timestamps: true });
+
 async function seed() {
-  console.log('🧠 Connecting to MongoDB...');
+  console.log('Connecting to MongoDB...');
   await mongoose.connect(MONGODB_URI, { dbName: MONGODB_DB });
-  console.log('✅ Connected');
+  console.log('Connected');
 
-  const Agent = mongoose.models.Agent || mongoose.model('Agent', AgentSchema);
-  const BrainState = mongoose.models.BrainState || mongoose.model('BrainState', BrainStateSchema);
-  const Signal = mongoose.models.Signal || mongoose.model('Signal', SignalSchema);
-  const Directive = mongoose.models.Directive || mongoose.model('Directive', DirectiveSchema);
+  const AgentModel = mongoose.models.Agent || mongoose.model('Agent', AgentSchema);
+  const BrainStateModel = mongoose.models.BrainState || mongoose.model('BrainState', BrainStateSchema);
+  const SignalModel = mongoose.models.Signal || mongoose.model('Signal', SignalSchema);
+  const DirectiveModel = mongoose.models.Directive || mongoose.model('Directive', DirectiveSchema);
+  const ArtifactModel = mongoose.models.Artifact || mongoose.model('Artifact', ArtifactSchema);
 
-  // Clear existing data
-  await Agent.deleteMany({});
-  await BrainState.deleteMany({});
-  await Signal.deleteMany({});
-  await Directive.deleteMany({});
-  console.log('🗑️  Cleared existing data');
+  // Clear ALL collections
+  await AgentModel.deleteMany({});
+  await BrainStateModel.deleteMany({});
+  await SignalModel.deleteMany({});
+  await DirectiveModel.deleteMany({});
+  await ArtifactModel.deleteMany({});
+  console.log('Cleared all collections');
 
-  // Create dummy agents with skill declarations
-  const sensorBot = await Agent.create({
+  // ── Dummy agents (visual placeholders only, never act on real data) ──
+
+  const sensorBot = await AgentModel.create({
     name: 'SensorBot',
     description: 'Autonomous sensor agent — gathers weather, news, and system telemetry',
     apiKey: `agentbrain_sensor_${nanoid(24)}`,
@@ -115,11 +132,11 @@ async function seed() {
       ],
       acting: [],
     },
-    metadata: { type: 'dummy', autoRun: true },
+    metadata: { type: 'dummy' },
   });
-  console.log(`👁️  Created SensorBot (sensor): ${sensorBot.name} [S:3 A:0]`);
+  console.log(`Created SensorBot (sensor, dummy)`);
 
-  const actuatorBot = await Agent.create({
+  const actuatorBot = await AgentModel.create({
     name: 'ActuatorBot',
     description: 'Autonomous actuator agent — writes files, sends messages, and deploys code',
     apiKey: `agentbrain_actuator_${nanoid(24)}`,
@@ -134,13 +151,13 @@ async function seed() {
         { name: 'deploy_code', description: 'Deploy code to staging or production' },
       ],
     },
-    metadata: { type: 'dummy', autoRun: true },
+    metadata: { type: 'dummy' },
   });
-  console.log(`⚡ Created ActuatorBot (actuator): ${actuatorBot.name} [S:0 A:3]`);
+  console.log(`Created ActuatorBot (actuator, dummy)`);
 
-  const thinkBot = await Agent.create({
+  const thinkBot = await AgentModel.create({
     name: 'ThinkBot',
-    description: 'Initial interneuron — the first brain of the Agent Brain network, full skill access',
+    description: 'Initial interneuron placeholder — the first brain of the Agent Brain network',
     apiKey: `agentbrain_think_${nanoid(24)}`,
     claimToken: `agentbrain_claim_${nanoid(16)}`,
     claimStatus: 'claimed',
@@ -157,62 +174,129 @@ async function seed() {
         { name: 'deploy_code', description: 'Deploy code to staging or production' },
       ],
     },
-    metadata: { type: 'dummy', autoRun: true },
+    metadata: { type: 'dummy' },
   });
-  console.log(`🧠 Created ThinkBot (interneuron): ${thinkBot.name} [S:3 A:3]`);
+  console.log(`Created ThinkBot (interneuron, dummy)`);
 
-  // Create initial brain state
-  await BrainState.create({
+  // BrainState: ThinkBot is the placeholder brain until a real agent claims
+  await BrainStateModel.create({
     currentInterneuronId: thinkBot._id,
     rotationCount: 0,
     lastRotationAt: new Date(),
     nextRotationAt: new Date(Date.now() + 10 * 60 * 1000),
     history: [{ agentId: thinkBot._id, startedAt: new Date() }],
   });
-  console.log('🧠 BrainState initialized with ThinkBot as interneuron');
+  console.log('BrainState initialized with ThinkBot as placeholder brain');
 
-  // Create some sample signals
-  const signalTypes = ['weather', 'news', 'system_status', 'mood_check', 'random_fact'];
-  for (let i = 0; i < 5; i++) {
-    await Signal.create({
-      fromAgentId: sensorBot._id,
-      type: signalTypes[i],
+  // ── Sample signals — use new envelope format (source + payload:{data,timestamp}) ──
+  const sampleSignals = [
+    {
+      type: 'weather_check',
+      source: 'weather_check',
       payload: {
-        data: `Sample ${signalTypes[i]} reading #${i + 1}`,
-        timestamp: new Date(),
-        value: Math.random().toFixed(2),
+        data: { temperature: 68, unit: 'F', location: 'Cambridge MA', conditions: 'partly cloudy' },
+        timestamp: new Date().toISOString(),
       },
-      status: i < 3 ? 'pending' : 'processed',
-      processedByBrainId: i >= 3 ? thinkBot._id : undefined,
-    });
-  }
-  console.log('📡 Created 5 sample signals');
+      status: 'processed',
+    },
+    {
+      type: 'news_fetch',
+      source: 'news_fetch',
+      payload: {
+        data: { headline: 'MIT researchers demonstrate new neural interface', summary: 'New paper published in Nature' },
+        timestamp: new Date().toISOString(),
+      },
+      status: 'processed',
+    },
+    {
+      type: 'system_monitor',
+      source: 'system_monitor',
+      payload: {
+        data: { healthy: true, time: '14:00:00', timezone: 'UTC', notes: 'All systems nominal' },
+        timestamp: new Date().toISOString(),
+      },
+      status: 'pending',
+    },
+    {
+      type: 'weather_check',
+      source: 'weather_check',
+      payload: {
+        data: { temperature: 71, unit: 'F', location: 'Cambridge MA', conditions: 'sunny' },
+        timestamp: new Date().toISOString(),
+      },
+      status: 'pending',
+    },
+    {
+      type: 'news_fetch',
+      source: 'news_fetch',
+      payload: {
+        data: { headline: 'New AI coordination protocols released', summary: 'Agent frameworks getting stronger' },
+        timestamp: new Date().toISOString(),
+      },
+      status: 'pending',
+    },
+  ];
 
-  // Create some sample directives
-  for (let i = 0; i < 3; i++) {
-    await Directive.create({
+  for (const s of sampleSignals) {
+    await SignalModel.create({ fromAgentId: sensorBot._id, ...s });
+  }
+  console.log(`Created ${sampleSignals.length} sample signals`);
+
+  // ── Sample directives — use new schema (instructions + context required) ──
+  const sampleDirectives = [
+    {
+      type: 'summarize',
+      payload: {
+        instructions: 'Write a one-paragraph summary of today\'s weather and news headlines and save it to /tmp/brain-summary.txt',
+        context: 'SensorBot reported 68°F in Cambridge and an MIT neural interface headline. Worth documenting.',
+        input_data: { temperature: 68, headline: 'MIT researchers demonstrate new neural interface' },
+      },
+      status: 'completed',
+      result: { status: 'success', action_taken: 'Wrote summary to /tmp/brain-summary.txt' },
+      acceptedAt: new Date(),
+      completedAt: new Date(),
+    },
+    {
+      type: 'notify',
+      payload: {
+        instructions: 'Send a Slack message to #brain-updates summarizing the latest sensor readings',
+        context: 'Multiple weather readings received — interneuron wants a digest posted',
+        input_data: { channel: '#brain-updates' },
+      },
+      status: 'accepted',
+      acceptedAt: new Date(),
+    },
+    {
+      type: 'log_observation',
+      payload: {
+        instructions: 'Append the current system status observation to /tmp/brain-log.txt',
+        context: 'System monitor reported healthy status — log it for the record',
+        input_data: { healthy: true, time: '14:00:00' },
+      },
+      status: 'pending',
+    },
+  ];
+
+  for (const d of sampleDirectives) {
+    await DirectiveModel.create({
       fromBrainId: thinkBot._id,
       toAgentId: actuatorBot._id,
-      type: 'execute_task',
-      payload: { task: `Sample task #${i + 1}`, priority: i === 0 ? 'high' : 'normal' },
-      status: i === 0 ? 'completed' : i === 1 ? 'accepted' : 'pending',
-      result: i === 0 ? { message: 'Task completed successfully' } : undefined,
-      completedAt: i === 0 ? new Date() : undefined,
-      acceptedAt: i <= 1 ? new Date() : undefined,
+      ...d,
     });
   }
-  console.log('📋 Created 3 sample directives');
+  console.log(`Created ${sampleDirectives.length} sample directives`);
 
-  console.log('\n🎉 Seed complete! Agent Brain is ready.\n');
-  console.log('API Keys (for testing):');
-  console.log(`  SensorBot:  ${sensorBot.apiKey}`);
+  console.log('\nSeed complete. Agent Brain is ready for real agents to join.');
+  console.log('When a real agent registers and is claimed, it will become the interneuron.');
+  console.log('\nDummy API keys (for UI testing only — these agents are placeholders):');
+  console.log(`  SensorBot:   ${sensorBot.apiKey}`);
   console.log(`  ActuatorBot: ${actuatorBot.apiKey}`);
-  console.log(`  ThinkBot:   ${thinkBot.apiKey}`);
+  console.log(`  ThinkBot:    ${thinkBot.apiKey}`);
 
   await mongoose.disconnect();
 }
 
 seed().catch(err => {
-  console.error('❌ Seed failed:', err);
+  console.error('Seed failed:', err);
   process.exit(1);
 });
