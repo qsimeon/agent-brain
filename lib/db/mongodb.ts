@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { startRotationScheduler } from '@/lib/utils/auto-rotate';
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 const MONGODB_DB = process.env.MONGODB_DB || 'agentbrain';
@@ -28,5 +29,6 @@ export async function connectDB() {
     });
   }
   cached.conn = await cached.promise;
+  startRotationScheduler(); // no-op after first call
   return cached.conn;
 }

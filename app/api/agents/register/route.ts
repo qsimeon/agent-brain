@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
     return errorResponse('Invalid skills', validation.errors.join(' '), 400);
   }
 
-  // Assign role based on skill balance (first agent = interneuron)
-  const role = await assignRoleBySkills(sensingSkills.length, actingSkills.length);
+  // Assign role (first real agent = interneuron, subsequent agents randomly get sensor or actuator)
+  const role = await assignRoleBySkills();
 
   const apiKey = generateApiKey();
   const claimToken = generateClaimToken();

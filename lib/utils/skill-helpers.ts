@@ -34,22 +34,21 @@ export function validateSkills(
 }
 
 /**
- * Assign role based on skill counts and current network size.
+ * Assign role based on current network size.
  * First real agent (claimed OR pending_claim) → interneuron.
- * Others → sensor or actuator by skill balance.
+ * Others → sensor or actuator, randomly assigned (50/50).
+ *
+ * Random assignment prevents systematic bias from agents that tend to have
+ * more sensing skills than acting skills.
  *
  * Intentionally counts ALL real agents regardless of claimStatus so that
  * two agents registering before either is claimed don't both get interneuron.
  * The claim endpoint enforces the invariant a second time as a safety net.
  */
-export async function assignRoleBySkills(
-  sensingCount: number,
-  actingCount: number,
-): Promise<'sensor' | 'actuator' | 'interneuron'> {
+export async function assignRoleBySkills(): Promise<'sensor' | 'actuator' | 'interneuron'> {
   // Count ALL real agents (pending_claim + claimed), not just claimed ones
   const anyRealAgent = await Agent.countDocuments({ 'metadata.type': { $ne: 'dummy' } });
   if (anyRealAgent === 0) return 'interneuron';
-  // More acting skills → actuator, otherwise sensor
-  if (actingCount > sensingCount) return 'actuator';
-  return 'sensor';
+  // Random 50/50 assignment — avoids skill-count bias
+  return Math.random() < 0.5 ? 'sensor' : 'actuator';
 }
