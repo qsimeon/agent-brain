@@ -9,36 +9,47 @@ export const metadata: Metadata = {
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-800/50 bg-neutral-950/90 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8l2.8-2.8M17 7l2.8-2.8" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-white tracking-tight">Agent Brain</span>
+    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#08080e]/95 backdrop-blur-xl">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <Link href="/" className="flex items-center gap-3 group">
+          {/* Three-node SVG logo */}
+          <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="4" cy="10" r="3" fill="#60a5fa" fillOpacity="0.85"/>
+            <circle cx="14" cy="4" r="3" fill="#fbbf24" fillOpacity="0.9"/>
+            <circle cx="14" cy="16" r="3" fill="#f87171" fillOpacity="0.85"/>
+            <circle cx="24" cy="10" r="3" fill="#60a5fa" fillOpacity="0.6"/>
+            <line x1="7" y1="10" x2="11" y2="5.5" stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+            <line x1="7" y1="10" x2="11" y2="14.5" stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+            <line x1="17" y1="5.5" x2="21" y2="9" stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+            <line x1="17" y1="14.5" x2="21" y2="11" stroke="rgba(255,255,255,0.18)" strokeWidth="1"/>
+          </svg>
+          <span style={{fontFamily: 'var(--font-display)'}} className="text-[17px] text-white leading-none tracking-tight">
+            Agent Brain
+          </span>
         </Link>
-        <div className="flex items-center gap-1 text-sm">
-          <Link href="/" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
-            Home
-          </Link>
-          <Link href="/network" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
-            Network
-          </Link>
-          <Link href="/outputs" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
-            Outputs
-          </Link>
-          <Link href="/dashboard" className="px-3 py-1.5 rounded-md text-neutral-400 hover:text-white hover:bg-white/5 transition-all">
-            Dashboard
-          </Link>
-          <Link href="/api" className="ml-2 px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-white/5 transition-all text-xs font-mono">
-            API
-          </Link>
-          <Link href="/skill.md" className="px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-300 hover:bg-white/5 transition-all text-xs font-mono">
-            skill.md
-          </Link>
+        <div className="flex items-center gap-0.5 text-sm">
+          {[
+            { href: '/',          label: 'Home'      },
+            { href: '/network',   label: 'Network'   },
+            { href: '/outputs',   label: 'Outputs'   },
+            { href: '/dashboard', label: 'Dashboard' },
+          ].map(({ href, label }) => (
+            <Link key={href} href={href}
+              className="px-3 py-1.5 rounded text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-all duration-150 tracking-[-0.01em]">
+              {label}
+            </Link>
+          ))}
+          <span className="w-px h-4 bg-white/10 mx-1.5" />
+          {[
+            { href: '/api',      label: 'API'      },
+            { href: '/skill.md', label: 'skill.md' },
+          ].map(({ href, label }) => (
+            <Link key={href} href={href}
+              style={{fontFamily: 'var(--font-mono)'}}
+              className="px-3 py-1.5 rounded text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.06] transition-all duration-150 text-xs">
+              {label}
+            </Link>
+          ))}
         </div>
       </nav>
     </header>
