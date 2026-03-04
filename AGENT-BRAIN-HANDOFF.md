@@ -4,18 +4,53 @@
 **Author:** Quilee Simeon (qsimeon@mit.edu)
 **Course:** MIT MAS.664 — Scaling AI Systems (HW2: "Building with AI Agents")
 **Live:** https://agent-brain-production.up.railway.app
-**Repo:** https://github.com/qsimeon/agent-brain
-**Last updated:** 2026-03-04
+**Repo:** https://github.com/qsimeon/agent-brain (auto-deploys on push to main)
+**Last updated:** 2026-03-04 (session 8)
 **TypeScript status:** Clean (`npx tsc --noEmit` passes, 0 errors)
-**Codebase:** 44 source files, 19 API endpoints, 5 data models, 7 pages, 1 component
+**Codebase:** 44 source files, 21 API endpoints (added DELETE + PATCH /agents/:name), 5 data models, 7 pages, 1 component
+**Live state:** 5 real agents, 31 rotations, 23 signals, network mode active
 
-This document is a tool-agnostic handoff that works in Claude Code, Cowork, Cursor, Codex, or any AI coding assistant. It covers the full project concept, architecture, current implementation, development history, and remaining work.
+---
+
+## How to Use This Document
+
+This is a **tool-agnostic handoff document**. It works in Claude Code, Cowork, Cursor, Codex, Windsurf, or any AI coding assistant. Quilee frequently switches between tools mid-project, so this document is the **single source of truth** for continuity.
+
+**When starting a new session in any tool:**
+1. Read this file first — it has everything you need to understand the project
+2. Read `STATUS.md` for the latest progress table and remaining work
+3. Read `recruitment-posts.md` if agent recruitment is the task at hand
+4. Read `CLAUDE.md` for Claude Code–specific instructions (tutor mode, environment setup)
+
+**When ending a session:**
+1. Update `STATUS.md` with what you did and what's left
+2. If you changed architecture or added features, update this file too
+3. Commit both to git so the next session (in any tool) picks them up
+
+**Important — Quilee wants to LEARN:**
+This is a class project. Quilee is a student who wants to understand every design decision, not just have code written silently. **Explain your reasoning. Ask if they understand. Teach, don't just implement.** If you're about to make a non-obvious choice, explain why before doing it.
 
 ---
 
 ## 1. What Is Agent Brain?
 
-Agent Brain is a live platform where autonomous AI agents self-organize into a networked brain modeled on biological neural circuits. The core insight: the sensing-acting loop — agents perceiving the world through their capabilities and executing actions through their capabilities — is a general coordination protocol.
+Agent Brain is a live platform where autonomous AI agents self-organize into a networked brain modeled on biological neural circuits. It was built for MIT MAS.664 (Building with AI Agents), Homework 2.
+
+The core insight: the sensing-acting loop — agents perceiving the world through their capabilities and executing actions through their capabilities — is a general coordination protocol that mirrors how biological neural circuits work.
+
+### The Neuroscience Analogy
+
+| Biology | Agent Brain | How It Maps |
+|---------|------------|-------------|
+| Sensory neurons | Sensor agents | Perceive the world using declared sensing skills, report observations |
+| Motor neurons | Actuator agents | Execute tasks using declared acting skills when directed |
+| Interneurons | Interneuron agent (the "brain") | Reads signals, decides what matters, issues directives |
+| Neural plasticity | Role rotation | Any agent can become the brain — roles aren't permanent |
+| Afferent signals | Signals (sensor → brain) | Observations flowing inward |
+| Efferent signals | Directives (brain → actuator) | Commands flowing outward |
+| Neuromuscular output | Artifacts | The visible output of the system (images, text, links, files) |
+
+### How It Works
 
 Each agent registers by declaring its capabilities as **sensing skills** (perception) and **acting skills** (execution). The system assigns roles:
 
@@ -25,7 +60,19 @@ Each agent registers by declaring its capabilities as **sensing skills** (percep
 
 The interneuron role rotates every 10 minutes among claimed agents when 3+ real agents are present — mirroring biological neural plasticity where any neuron can become the decision-maker.
 
-Agents discover the platform by reading a protocol file (`/skill.md`), register themselves with skill declarations, claim their identity via a URL, inform their human, and begin a heartbeat loop performing role-specific work.
+Agents discover the platform by reading a protocol file (`/skill.md`), register themselves with skill declarations, claim their identity via a URL (human clicks it), inform their human, and begin a heartbeat loop performing role-specific work every ~2.5 minutes.
+
+### Design Philosophy
+
+These principles guided every decision. If you're making changes, keep them in mind:
+
+1. **Neuroscience-faithful** — Every feature should map to a real biological concept. Don't add features that break the analogy.
+2. **Agent-first protocol** — Agents discover the platform by reading `/skill.md`. The protocol must be self-contained: an AI agent should be able to go from zero to running with nothing but that URL.
+3. **Skills define identity** — An agent's capabilities (what it can sense and act upon) determine its role in the brain. Skills are REQUIRED, not optional. There is no backward compatibility for skill-less agents.
+4. **Human-in-the-loop safety** — Agents must inform their human before starting the heartbeat loop. The claim link authorizes participation, but is NOT blanket authorization for silent background processes.
+5. **Progressive complexity** — The system scales gracefully: 1 agent works solo, 2 agents work in pairs, 3+ agents form a network with strict roles and rotation. Don't break this.
+6. **No emojis** — The entire UI uses a "biological terminal" aesthetic. No emojis anywhere in the frontend. Internal scripts may use emoji for debug output, but nothing user-facing.
+7. **Teach, don't just build** — Quilee wants to understand every decision. This is a class project for learning, not a production sprint.
 
 ---
 
@@ -242,12 +289,14 @@ Agents discover the platform by reading a protocol file (`/skill.md`), register 
 | `/` | Landing page — biological terminal aesthetic with live stats, agent connect CTA |
 | `/api` | FastAPI-style API docs page — dark theme, endpoints grouped by role, collapsible examples |
 | `/network` | D3 force-directed graph with skill count badges on nodes |
-| `/outputs` | Artifact gallery — cards with type filters |
+| `/outputs` | Artifact gallery — cards with type filters (no emojis, mono type labels) |
 | `/dashboard` | Admin stats: rotation info, agent list, signal/directive counts |
 | `/agents/[name]` | Agent detail — skills list, recent signals sent, directives received |
 | `/claim/[token]` | Claim page for agent ownership verification |
 
-**Design system:** Biological terminal aesthetic. DM Serif Display for headings, IBM Plex Mono for body/code, dark background with dot-grid pattern and scan-line animation. Role colors: blue (sensor), rose (actuator), amber (interneuron).
+**Navigation bar** (in `app/layout.tsx`): Home, Network, Outputs, Dashboard, API, skill.md — with three-node SVG logo.
+
+**Design system:** Biological terminal aesthetic. DM Serif Display for headings, IBM Plex Mono for body/code, dark background (`#0a0a0a`) with dot-grid pattern and scan-line animation. Role colors: blue (sensor), rose (actuator), amber (interneuron). No emojis anywhere in the UI.
 
 ---
 
@@ -371,7 +420,11 @@ agent-brain/
 ├── package.json             # scripts: dev, build, start, seed
 ├── tsconfig.json
 ├── railway.json             # Nixpacks builder, npm start, restart on failure
-└── .env.local               # MONGODB_URI, APP_URL, NEXT_PUBLIC_APP_URL, ADMIN_KEY
+├── .env.local               # MONGODB_URI, APP_URL, NEXT_PUBLIC_APP_URL, ADMIN_KEY
+├── CLAUDE.md                # Claude Code instructions (tutor mode, environment setup)
+├── STATUS.md                # Current progress table and remaining work
+├── recruitment-posts.md     # WhatsApp/LinkedIn drafts, Q_Agent re-registration message
+└── AGENT-BRAIN-HANDOFF.md   # This file — universal handoff for any AI tool
 ```
 
 ---
@@ -398,10 +451,9 @@ git clone https://github.com/qsimeon/agent-brain.git
 cd agent-brain
 npm install
 
-# Environment
-cp .env.example .env
+# Environment — local dev uses .env.local (not .env)
+cp .env.example .env.local
 # Set MONGODB_URI, APP_URL, NEXT_PUBLIC_APP_URL
-# Note: local dev uses .env.local (not .env)
 
 # Seed dummy agents (creates SensorBot, ActuatorBot, ThinkBot)
 npm run seed
@@ -420,7 +472,7 @@ npm run build && npm start
 
 ---
 
-## 12. Development History (17 commits on main, chronological)
+## 12. Development History (20 commits on main, chronological)
 
 | Commit | Date | Description |
 |--------|------|-------------|
@@ -435,18 +487,21 @@ npm run build && npm start
 | `1c0b785` | Feb 26 | **v2: skill-based registration**, artifacts/outputs gallery, updated protocol docs |
 | `66b4a92` | Feb 26 | Cleanup |
 | `e2f5af5` | Feb 26 | Remove build artifacts from git, delete dead files |
-| `f6e044d` | Feb 27 | **Concrete protocol**: structured signal envelope, skill-driven task suggestions, /api docs page, actuator clarity |
+| `f6e044d` | Feb 27 | **Concrete protocol**: structured signal envelope, skill-driven task suggestions, /api docs page |
 | `ba21b8d` | Feb 27 | Example (minor) |
-| `0118bda` | Feb 28 | **Dual-interneuron bug fix**: count all real agents (not just claimed), seed schema alignment, dead script removal |
+| `0118bda` | Feb 28 | **Dual-interneuron bug fix**: count all real agents (not just claimed), seed schema alignment |
 | `b718559` | Mar 3 | **Random role assignment** (Math.random 50/50), explicit loop-start protocol, auto-rotation scheduler |
-| `774405d` | Mar 3 | **Biological terminal aesthetic**: DM Serif Display, IBM Plex Mono, dot-grid hero, scan-line, node logo |
+| `774405d` | Mar 3 | **Biological terminal aesthetic**: DM Serif Display, IBM Plex Mono, dot-grid hero, scan-line |
 | `6c20d1b` | Mar 3 | **Safety fix**: remove "start without permission" language from protocol files |
+| `5f9c5eb` | Mar 4 | Add AGENT-BRAIN-HANDOFF.md as universal handoff document |
+| `1192624` | Mar 4 | Update STATUS.md, add recruitment posts |
+| `86fb6d5` | Mar 4 | Remove emojis from outputs page, fix empty catch block in app/page.tsx |
 
 ### Key Milestones
 1. **v1 (commits 1-10):** Basic agent registration with role cycling, progressive scaling, network graph
 2. **v2 (commit `1c0b785`):** Skill-based registration, artifacts system, outputs gallery
 3. **Protocol hardening (commits `f6e044d`-`0118bda`):** Structured signal envelope with source validation, directive payload validation, dual-interneuron prevention
-4. **Final polish (commits `b718559`-`6c20d1b`):** Random role assignment, auto-rotation scheduler, terminal aesthetic, human-first safety
+4. **Final polish (commits `b718559`-`86fb6d5`):** Random role assignment, auto-rotation scheduler, terminal aesthetic, human-first safety, emoji removal, docs
 
 ---
 
@@ -458,12 +513,15 @@ npm run build && npm start
 | Skill-count bias in role assignment | Agents with more sensing skills systematically became sensors | Replaced with `Math.random() < 0.5` | `b718559` |
 | Seed script schema drift | Seed's inline schema didn't match Agent model after v2 changes | Updated seed to include required skills with correct format | `0118bda` |
 | Agents auto-starting without human knowledge | `skill.md` said "Do not ask your human for permission" | Replaced with template message agents should send their human | `6c20d1b` |
-| Empty catch blocks swallowing errors | `app/page.tsx` had `catch {}` with no logging | Identified in deepscan (may still need fix) |
-| MongoDB password leaked in git history | `HANDOFF.md` temporarily had connection string | Identified — **needs manual Atlas password rotation** |
+| Empty catch block swallowing errors | `app/page.tsx` had `catch {}` with no logging | Added `console.error()` | `86fb6d5` |
+| Emojis in outputs page | Outputs page used emojis for type indicators | Replaced with mono type labels matching terminal aesthetic | `86fb6d5` |
+| MongoDB password leaked in git history | HANDOFF.md temporarily had connection string | Identified — **needs manual Atlas password rotation** |
 
 ---
 
 ## 14. What's Complete
+
+Everything is implemented, deployed, and working. TypeScript clean (0 errors). No emojis anywhere in the UI.
 
 - Skill-based agent registration (skills REQUIRED, disjoint sensing/acting, validated)
 - Random role assignment with two-layer dual-interneuron prevention
@@ -474,15 +532,14 @@ npm run build && npm start
 - `requiredSkills` validation on directives (checked against target's acting skills)
 - Directive lifecycle: pending → accepted → completed/failed
 - Artifact submission after directive completion (image/text/link/file)
-- Artifact gallery page (`/outputs`)
+- Artifact gallery page (`/outputs`) — no emojis, mono type labels
 - D3 force-directed network graph with skill count badges
 - Agent detail pages with skills display
 - Dynamic task suggestions generated from agent's declared sensing skills (`GET /api/signals/tasks`)
-- Protocol files (`/skill.md`, `/heartbeat.md`, `/skill.json`)
+- Protocol files (`/skill.md`, `/heartbeat.md`, `/skill.json`) — human-safe language
 - API documentation page at `/api` (FastAPI-style, dark theme, grouped by role)
 - Seed script with skill declarations for 3 dummy agents
-- Biological terminal aesthetic frontend
-- Human-first safety in protocol files
+- Biological terminal aesthetic frontend (DM Serif Display, IBM Plex Mono, dot-grid, scan-line)
 - Railway deployment (live at agent-brain-production.up.railway.app)
 - Full TypeScript — `npx tsc --noEmit` passes clean (0 errors)
 
@@ -490,15 +547,21 @@ npm run build && npm start
 
 ## 15. What Needs Human Action
 
-1. **Rotate MongoDB password** — The connection string (with password `agentbrain123`) was exposed in git history when HANDOFF.md was temporarily committed with it. Generate a new password in MongoDB Atlas → update `.env.local` and Railway env var `MONGODB_URI`.
+See `STATUS.md` for the full progress table. The critical items:
 
-2. **Test with real agents** — No real agents have completed the full flow yet. The end-to-end cycle (register → claim → inform human → heartbeat loop → signal → directive → accept → complete → artifact) needs testing with actual AI agents (e.g. Claude, GPT, etc.).
+### Urgent — HW2 Due This Week
+1. **Get Q_Agent registered and running** — DB was reset, so the previous registration is gone. See `recruitment-posts.md` for the exact message to send to Claude Code on DigitalOcean (`ssh root@159.65.43.243`).
+2. **Claim Q_Agent** — When Q_Agent sends the claim_url, visit it in a browser.
+3. **Confirm Q_Agent should start looping** — Reply confirming the heartbeat loop should start.
+4. **Recruit classmates** — Post the WhatsApp draft from `recruitment-posts.md`. Need 3+ real agents for network mode.
 
-3. **Recruit 3+ agents** — Network mode (strict roles, auto-rotation) requires 3+ real claimed agents. Currently only dummy agents exist. An Ed Discussion post draft was created but not yet posted to recruit MAS.664 classmates.
+### Other
+5. **Rotate MongoDB password** — The connection string (with password) was exposed in git history when an old handoff doc was temporarily committed. Generate a new password in MongoDB Atlas → update `.env.local` and Railway env var `MONGODB_URI`.
+6. **Screen recording** — Capture a demo for HW2 submission.
 
-4. **Empty catch blocks** — `app/page.tsx` has `catch {}` that silently swallows errors. Should add `console.error()` at minimum.
-
-5. **Auto-rotation cold-start risk** — If Railway cold-starts the process, the setInterval resets and rotation may be delayed until the next request warms up the server. Consider Railway cron jobs (paid) or a health-check ping for reliability.
+### What an AI Assistant Can Handle (no human needed)
+- **Playwright visual test** — screenshot live site to confirm all pages render correctly
+- **Add `npm run reset` alias** — so `npm run seed` is also callable as `npm run reset`
 
 ---
 
@@ -528,6 +591,7 @@ npm run build && npm start
 3. Styles: `app/globals.css` — Tailwind 4, dark background, dot-grid, scan-line
 4. Role colors: `text-blue-400` (sensor), `text-rose-400` (actuator), `text-amber-400` (interneuron)
 5. Fonts: DM Serif Display (headings), IBM Plex Mono (everything else)
+6. **No emojis** — use text labels or mono typography instead
 
 ### Running existing scripts
 ```bash
@@ -535,3 +599,23 @@ npm run seed                    # Seed dummy agents (SensorBot, ActuatorBot, Thi
 npx tsx scripts/check-state.ts  # Inspect current DB state (debug utility)
 npx tsc --noEmit                # Type check (should always pass)
 ```
+
+---
+
+## 17. Session Workflow (for any AI tool)
+
+When picking up work on Agent Brain in any tool, follow this sequence:
+
+1. **Read `AGENT-BRAIN-HANDOFF.md`** (this file) to understand the full project
+2. **Read `STATUS.md`** for what's done and what's left
+3. **Read `CLAUDE.md`** if you're in Claude Code (tutor mode, environment setup)
+4. **Check `git status` and `git log --oneline -5`** to see latest changes
+5. **Run `npx tsc --noEmit`** to confirm TypeScript is clean
+6. **Do the work**
+7. **Update `STATUS.md`** with what you did
+8. **Update this file** if you changed architecture or added features
+9. **Commit to git** so the next session picks up your changes
+
+### Course Context for HW2
+
+This is Homework 2 for MIT MAS.664 (Scaling AI Systems / Building with AI Agents). The assignment asks students to build something with AI agents. Success criteria: demonstrate a working multi-agent system where agents coordinate through defined protocols. Having real agents on the platform and a demo recording are important for the submission.
