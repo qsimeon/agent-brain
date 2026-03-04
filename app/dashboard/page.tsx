@@ -185,11 +185,12 @@ export default function DashboardPage() {
                     {a.metadata?.type === 'dummy' ? 'placeholder' : a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
                   </span>
 
-                  {/* Role selector — admin only */}
+                  {/* Role selector — admin only, disabled for dummy/placeholder agents */}
                   <select
                     value={a.role}
                     onChange={e => reassignRole(a.name, e.target.value)}
-                    disabled={reassigning === a.name}
+                    disabled={reassigning === a.name || a.metadata?.type === 'dummy'}
+                    title={a.metadata?.type === 'dummy' ? 'Cannot reassign placeholder agents' : 'Change role'}
                     style={{ fontFamily: 'var(--font-mono)' }}
                     className={`text-[10px] uppercase tracking-wider border px-2 py-0.5 bg-neutral-900 cursor-pointer disabled:opacity-40 transition-colors ${
                       a.role === 'interneuron'
