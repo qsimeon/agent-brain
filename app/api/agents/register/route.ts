@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const name = sanitizeInput(body.name || '');
   const description = sanitizeInput(body.description || '');
+  const webhookConfig = body.webhookConfig || undefined;
 
   if (!name || !description) {
     return errorResponse('Missing fields', 'Both "name" and "description" are required.', 400);
@@ -44,12 +45,38 @@ export async function POST(req: NextRequest) {
   const claimToken = generateClaimToken();
   const baseUrl = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+  // Validate webhookConfig if provided
+  let validatedWebhookConfig: Record<string, unknown> | undefined;
+  if (webhookConfig && typeof webhookConfig === 'object') {
+    if (webhookConfig.type === 'openclaw') {
+      if (!webhookConfig.gatewayUrl || !webhookConfig.hookToken) {
+        return errorResponse('Invalid webhookConfig', 'OpenClaw webhooks require "gatewayUrl" and "hookToken".', 400);
+      }
+      validatedWebhookConfig = {
+        type: 'openclaw',
+        gatewayUrl: String(webhookConfig.gatewayUrl).replace(/\/$/, ''),
+        hookToken: String(webhookConfig.hookToken),
+        ...(webhookConfig.agentId ? { agentId: String(webhookConfig.agentId) } : {}),
+      };
+    } else if (webhookConfig.type === 'webhook') {
+      if (!webhookConfig.url) {
+        return errorResponse('Invalid webhookConfig', 'Generic webhooks require a "url".', 400);
+      }
+      validatedWebhookConfig = {
+        type: 'webhook',
+        url: String(webhookConfig.url),
+        ...(webhookConfig.secret ? { secret: String(webhookConfig.secret) } : {}),
+      };
+    }
+  }
+
   await Agent.create({
     name,
     description,
     apiKey,
     claimToken,
     role,
+    ...(validatedWebhookConfig ? { webhookConfig: validatedWebhookConfig } : {}),
     skills: {
       sensing: sensingSkills.map((s: any) => ({
         name: sanitizeInput(String(s.name || '')),

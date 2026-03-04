@@ -6,6 +6,7 @@ import Directive from '@/lib/models/Directive';
 import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse, extractApiKey } from '@/lib/utils/api-helpers';
 import { getRealAgentCount } from '@/lib/utils/agent-helpers';
+import { notifyAgentOfDirective } from '@/lib/utils/notify-agent';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -121,5 +122,17 @@ export async function POST(req: NextRequest) {
   agent.lastActive = new Date();
   await agent.save();
 
-  return successResponse({ directive }, 201);
+  // Push notification to the target agent (fire-and-forget — don't block the response)
+  notifyAgentOfDirective(targetAgent, {
+    id: directive._id.toString(),
+    type: directive.type,
+    payload: directive.payload as { instructions: string; context: string; input_data?: Record<string, unknown> },
+  }).catch(() => {});
+
+  return successResponse({
+    directive,
+    notification: targetAgent.webhookConfig
+      ? { sent: true, type: targetAgent.webhookConfig.type }
+      : { sent: false, hint: 'Target agent has no webhookConfig — they must poll /api/directives/pending' },
+  }, 201);
 }

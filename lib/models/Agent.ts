@@ -5,6 +5,17 @@ export interface ISkill {
   description: string;
 }
 
+export interface IWebhookConfig {
+  type: 'openclaw' | 'webhook';
+  // OpenClaw: the gateway URL (e.g. https://xyz.ngrok.io) + hook token
+  gatewayUrl?: string;
+  hookToken?: string;
+  agentId?: string;    // optional OpenClaw agentId if multi-agent setup
+  // Generic webhook: any URL that accepts POST
+  url?: string;
+  secret?: string;     // optional Authorization secret for generic webhooks
+}
+
 export interface IAgent extends Document {
   name: string;
   description: string;
@@ -14,6 +25,7 @@ export interface IAgent extends Document {
   role: 'sensor' | 'actuator' | 'interneuron';
   ownerEmail?: string;
   metadata?: Record<string, any>;
+  webhookConfig?: IWebhookConfig;
   skills: {
     sensing: ISkill[];
     acting: ISkill[];
@@ -43,12 +55,21 @@ const AgentSchema = new Schema<IAgent>({
     },
     required: true,
   },
+  webhookConfig: {
+    type: { type: String, enum: ['openclaw', 'webhook'] },
+    gatewayUrl: String,
+    hookToken: String,
+    agentId: String,
+    url: String,
+    secret: String,
+  },
   lastActive: { type: Date, default: Date.now },
 }, {
   timestamps: true,
   toJSON: {
     transform: (_doc, ret: Record<string, unknown>) => {
-      const { apiKey, __v, ...rest } = ret;
+      // Strip sensitive fields: apiKey, webhookConfig (contains tokens)
+      const { apiKey, webhookConfig, __v, ...rest } = ret;
       return rest;
     },
   },
