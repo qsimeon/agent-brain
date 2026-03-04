@@ -34,7 +34,9 @@ export default function Home() {
           setStatus(json.data);
           setLoaded(true);
         }
-      } catch {}
+      } catch (err) {
+        console.error('Failed to fetch brain status:', err);
+      }
     };
     fetchStatus();
     const interval = setInterval(fetchStatus, 30000);
