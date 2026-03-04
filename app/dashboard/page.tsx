@@ -8,6 +8,7 @@ export default function DashboardPage() {
   const [agents, setAgents] = useState<any[]>([]);
   const [rotating, setRotating] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [reassigning, setReassigning] = useState<string | null>(null);
   const [adminKey, setAdminKey] = useState('');
   const [adminKeyVisible, setAdminKeyVisible] = useState(false);
 
@@ -61,6 +62,24 @@ export default function DashboardPage() {
       alert(`Error: ${json.error}`);
     }
     setRemoving(null);
+  };
+
+  const reassignRole = async (agentName: string, newRole: string) => {
+    const key = adminKey || prompt('Enter admin key:') || '';
+    if (!key) return;
+    setReassigning(agentName);
+    const res = await fetch(`/api/agents/${encodeURIComponent(agentName)}`, {
+      method: 'PATCH',
+      headers: { 'x-admin-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole }),
+    });
+    const json = await res.json();
+    if (json.success) {
+      await fetchAll();
+    } else {
+      alert(`Error: ${json.error}`);
+    }
+    setReassigning(null);
   };
 
   const roleConfig: Record<string, { dot: string; bg: string; text: string }> = {
@@ -151,20 +170,8 @@ export default function DashboardPage() {
                   <span className="text-neutral-600 text-xs hidden md:inline truncate">{a.description}</span>
                 </Link>
 
-                {/* Right side: role badge + status + remove */}
-                <div className="flex items-center gap-3 text-xs shrink-0 ml-4">
-                  <span
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                    className={`px-2 py-0.5 border text-[10px] uppercase tracking-wider ${
-                      a.role === 'interneuron'
-                        ? 'border-amber-500/30 text-amber-400'
-                        : a.role === 'sensor'
-                          ? 'border-blue-500/30 text-blue-400'
-                          : 'border-rose-500/30 text-rose-400'
-                    }`}
-                  >
-                    {a.role}
-                  </span>
+                {/* Right side: role badge + status + controls */}
+                <div className="flex items-center gap-2 text-xs shrink-0 ml-4">
                   <span
                     style={{ fontFamily: 'var(--font-mono)' }}
                     className={`text-[10px] ${
@@ -178,14 +185,33 @@ export default function DashboardPage() {
                     {a.metadata?.type === 'dummy' ? 'placeholder' : a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
                   </span>
 
-                  {/* Remove button — always visible, confirmation required */}
+                  {/* Role selector — admin only */}
+                  <select
+                    value={a.role}
+                    onChange={e => reassignRole(a.name, e.target.value)}
+                    disabled={reassigning === a.name}
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                    className={`text-[10px] uppercase tracking-wider border px-2 py-0.5 bg-neutral-900 cursor-pointer disabled:opacity-40 transition-colors ${
+                      a.role === 'interneuron'
+                        ? 'border-amber-500/30 text-amber-400'
+                        : a.role === 'sensor'
+                          ? 'border-blue-500/30 text-blue-400'
+                          : 'border-rose-500/30 text-rose-400'
+                    }`}
+                  >
+                    <option value="sensor">sensor</option>
+                    <option value="actuator">actuator</option>
+                    <option value="interneuron">interneuron</option>
+                  </select>
+
+                  {/* Remove button */}
                   <button
                     onClick={() => removeAgent(a.name)}
                     disabled={isRemoving}
                     style={{ fontFamily: 'var(--font-mono)' }}
                     className="text-[10px] uppercase tracking-wider text-neutral-700 hover:text-red-400 border border-transparent hover:border-red-900/50 px-2 py-0.5 transition-all disabled:opacity-40"
                   >
-                    {isRemoving ? 'removing...' : 'remove'}
+                    {isRemoving ? '...' : 'remove'}
                   </button>
                 </div>
               </div>
