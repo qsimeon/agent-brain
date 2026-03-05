@@ -52,7 +52,9 @@ export default function NetworkGraph() {
         const res = await fetch('/api/network');
         const json = await res.json();
         if (json.success) setData(json.data);
-      } catch {}
+      } catch (err) {
+        console.error('Failed to fetch network data:', err);
+      }
     };
     fetchData();
     const interval = setInterval(fetchData, 30000); // poll every 30s

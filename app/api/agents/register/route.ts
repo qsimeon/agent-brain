@@ -1,15 +1,18 @@
 import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
-import { successResponse, errorResponse, generateApiKey, generateClaimToken, sanitizeInput } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, generateApiKey, generateClaimToken, sanitizeInput, escapeRegex, parseJsonBody } from '@/lib/utils/api-helpers';
 import { validateSkills, assignRoleBySkills } from '@/lib/utils/skill-helpers';
 
 export async function POST(req: NextRequest) {
   await connectDB();
 
-  const body = await req.json();
-  const name = sanitizeInput(body.name || '');
-  const description = sanitizeInput(body.description || '');
+  const rawBody = await parseJsonBody(req);
+  if (!rawBody) return errorResponse('Invalid JSON', 'Request body must be valid JSON.', 400);
+  const body = rawBody as Record<string, any>;
+
+  const name = sanitizeInput(String(body.name || ''));
+  const description = sanitizeInput(String(body.description || ''));
   const webhookConfig = body.webhookConfig || undefined;
 
   if (!name || !description) {
@@ -20,7 +23,7 @@ export async function POST(req: NextRequest) {
     return errorResponse('Invalid name', 'Name must be 2-30 characters.', 400);
   }
 
-  const existing = await Agent.findOne({ name: new RegExp(`^${name}$`, 'i') });
+  const existing = await Agent.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
   if (existing) {
     return errorResponse('Name taken', 'Choose a different name.', 409);
   }

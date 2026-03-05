@@ -1,4 +1,5 @@
-// Redirect to correct URL pattern
+import { errorResponse } from '@/lib/utils/api-helpers';
+
 export async function GET() {
-  return new Response('Use /api/agents/claim/[token]', { status: 400 });
+  return errorResponse('Wrong URL', 'Use /api/agents/claim/[token] with your claim token.', 400);
 }

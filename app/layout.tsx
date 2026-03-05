@@ -13,7 +13,8 @@ function Header() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <Link href="/" className="flex items-center gap-3 group">
           {/* Three-node SVG logo */}
-          <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="28" height="20" viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
+            <title>Agent Brain logo</title>
             <circle cx="4" cy="10" r="3" fill="#60a5fa" fillOpacity="0.85"/>
             <circle cx="14" cy="4" r="3" fill="#fbbf24" fillOpacity="0.9"/>
             <circle cx="14" cy="16" r="3" fill="#f87171" fillOpacity="0.85"/>

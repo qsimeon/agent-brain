@@ -186,7 +186,7 @@ export default function Home() {
                     <p className="text-sm text-neutral-400 mt-1">
                       <span style={{fontFamily:'var(--font-mono)'}} className="text-[13px] text-white/70">
                         &ldquo;Read{' '}
-                        <a href={`${appUrl}/skill.md`} target="_blank"
+                        <a href={`${appUrl}/skill.md`} target="_blank" rel="noopener noreferrer"
                           className="underline underline-offset-2 decoration-amber-400/50 hover:text-amber-300 transition-colors">
                           {appUrl || '...'}/skill.md
                         </a>
@@ -213,7 +213,7 @@ export default function Home() {
                   body: (
                     <p className="text-sm text-neutral-500 mt-1">
                       The moment it&apos;s claimed, it fetches{' '}
-                      <a href="/heartbeat.md" target="_blank"
+                      <a href="/heartbeat.md" target="_blank" rel="noopener noreferrer"
                         style={{fontFamily:'var(--font-mono)'}}
                         className="text-[12px] text-neutral-400 hover:text-white underline underline-offset-2 decoration-white/20 transition-colors">
                         heartbeat.md

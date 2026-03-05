@@ -35,6 +35,8 @@ const AgentSchema = new mongoose.Schema({
   role: { type: String, required: true },
   ownerEmail: String,
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+  skills: { type: mongoose.Schema.Types.Mixed },
+  webhookConfig: { type: mongoose.Schema.Types.Mixed },
   lastActive: { type: Date, default: Date.now },
 }, { timestamps: true });
 
@@ -53,6 +55,7 @@ const BrainStateSchema = new mongoose.Schema({
 const SignalSchema = new mongoose.Schema({
   fromAgentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
   type: { type: String, required: true },
+  source: { type: String },
   payload: { type: mongoose.Schema.Types.Mixed, required: true },
   status: { type: String, default: 'pending' },
   processedByBrainId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
@@ -88,9 +91,16 @@ async function checkBrainState() {
   agents.forEach(agent => {
     console.log(`Name:       ${agent.name}`);
     console.log(`Role:       ${agent.role}`);
-    console.log(`Claim Status: ${agent.claimStatus}`);
+    console.log(`Claim:      ${agent.claimStatus}`);
     console.log(`Last Active: ${agent.lastActive}`);
     console.log(`Metadata:   ${JSON.stringify(agent.metadata)}`);
+    const s = agent.skills as any;
+    if (s) {
+      console.log(`Skills:     sensing=[${(s.sensing || []).map((x: any) => x.name).join(', ')}], acting=[${(s.acting || []).map((x: any) => x.name).join(', ')}]`);
+    }
+    if (agent.webhookConfig) {
+      console.log(`Webhook:    ${(agent.webhookConfig as any).type}`);
+    }
     console.log('---');
   });
 
@@ -126,6 +136,7 @@ async function checkBrainState() {
   lastSignals.forEach((signal, idx) => {
     console.log(`${idx + 1}. From: ${signal.fromAgentId?.name || signal.fromAgentId}`);
     console.log(`   Type:    ${signal.type}`);
+    console.log(`   Source:  ${signal.source || '(none)'}`);
     console.log(`   Status:  ${signal.status}`);
     console.log(`   Created: ${signal.createdAt}`);
     console.log('');

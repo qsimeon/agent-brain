@@ -4,7 +4,7 @@ import Agent from '@/lib/models/Agent';
 import Signal from '@/lib/models/Signal';
 import Directive from '@/lib/models/Directive';
 import BrainState from '@/lib/models/BrainState';
-import { successResponse, errorResponse, extractApiKey } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, extractApiKey, escapeRegex, parseJsonBody } from '@/lib/utils/api-helpers';
 import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 import { notifyAgentOfDirective } from '@/lib/utils/notify-agent';
 
@@ -27,7 +27,10 @@ export async function POST(req: NextRequest) {
     return errorResponse('Not current interneuron', 'You are not the active interneuron right now.', 403);
   }
 
-  const { toAgentName, type, payload, processSignalIds, requiredSkills, expectedOutput } = await req.json();
+  const body = await parseJsonBody(req);
+  if (!body) return errorResponse('Invalid JSON', 'Request body must be valid JSON.', 400);
+
+  const { toAgentName, type, payload, processSignalIds, requiredSkills, expectedOutput } = body as Record<string, any>;
 
   if (!toAgentName || !type || !payload) {
     return errorResponse('Missing fields', '"toAgentName", "type", and "payload" are required.', 400);
@@ -53,7 +56,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const targetAgent = await Agent.findOne({ name: new RegExp(`^${toAgentName}$`, 'i') });
+  const targetAgent = await Agent.findOne({ name: new RegExp(`^${escapeRegex(String(toAgentName))}$`, 'i') });
   if (!targetAgent) return errorResponse('Target agent not found', `No agent named "${toAgentName}".`, 404);
 
   // Progressive enforcement based on real agent count

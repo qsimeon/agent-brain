@@ -4,13 +4,13 @@ import Agent from '@/lib/models/Agent';
 import Signal from '@/lib/models/Signal';
 import Directive from '@/lib/models/Directive';
 import BrainState from '@/lib/models/BrainState';
-import { successResponse, errorResponse, checkAdminKey } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, checkAdminKey, escapeRegex } from '@/lib/utils/api-helpers';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ name: string }> }) {
   await connectDB();
   const { name } = await params;
 
-  const agent = await Agent.findOne({ name: new RegExp(`^${name}$`, 'i') }).select('-apiKey -__v');
+  const agent = await Agent.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') }).select('-apiKey -__v');
   if (!agent) return errorResponse('Agent not found', `No agent named "${name}".`, 404);
 
   const recentSignals = await Signal.find({ fromAgentId: agent._id }).sort({ createdAt: -1 }).limit(10);
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ na
   }
 
   const { name } = await params;
-  const agent = await Agent.findOne({ name: new RegExp(`^${name}$`, 'i') });
+  const agent = await Agent.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
   if (!agent) return errorResponse('Agent not found', `No agent named "${name}".`, 404);
 
   const body = await req.json().catch(() => ({}));
@@ -84,7 +84,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
   }
 
   const { name } = await params;
-  const agent = await Agent.findOne({ name: new RegExp(`^${name}$`, 'i') });
+  const agent = await Agent.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
   if (!agent) return errorResponse('Agent not found', `No agent named "${name}".`, 404);
 
   // If this agent was the current interneuron, clear BrainState so the next

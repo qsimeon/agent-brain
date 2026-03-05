@@ -30,3 +30,15 @@ export function checkAdminKey(req: Request): boolean {
 export function sanitizeInput(input: string): string {
   return input.trim().replace(/\0/g, '');
 }
+
+export function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export async function parseJsonBody(req: Request): Promise<Record<string, unknown> | null> {
+  try {
+    return await req.json();
+  } catch {
+    return null;
+  }
+}

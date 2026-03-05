@@ -96,7 +96,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 // Page
 // ─────────────────────────────────────────────
 
-const BASE = 'https://agent-brain-production.up.railway.app';
+const BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://agent-brain-production.up.railway.app';
 
 export default function ApiDocsPage() {
   return (

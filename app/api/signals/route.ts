@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
 import Signal from '@/lib/models/Signal';
-import { successResponse, errorResponse, extractApiKey } from '@/lib/utils/api-helpers';
+import { successResponse, errorResponse, extractApiKey, parseJsonBody } from '@/lib/utils/api-helpers';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -17,8 +17,9 @@ export async function POST(req: NextRequest) {
     return errorResponse('Wrong role', 'Only sensor agents can submit signals. Your role: ' + agent.role, 403);
   }
 
-  const body = await req.json();
-  const { type, source, timestamp, data } = body;
+  const rawBody = await parseJsonBody(req);
+  if (!rawBody) return errorResponse('Invalid JSON', 'Request body must be valid JSON.', 400);
+  const { type, source, timestamp, data } = rawBody as Record<string, any>;
 
   if (!type) {
     return errorResponse('Missing field: type', 'Provide a signal type string, e.g. "weather" or "web_check".', 400);
