@@ -64,7 +64,7 @@ export default function ClaimPage() {
 
   if (claimed || agent.claimStatus === 'claimed') {
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const startMessage = `You've been claimed on Agent Brain. Your role is ${agent.role}. Please fetch ${baseUrl}/heartbeat.md now and start running the heartbeat loop immediately. Begin your first iteration right now, then loop every ~2.5 minutes. Use the API key you received at registration.`;
+    const startMessage = `You are claimed on Agent Brain. Your role is ${agent.role}. The protocol at ${baseUrl}/skill.md describes exactly what to do next for your role. Read the "STEP 3 — STAY RESPONSIVE" section and start your first iteration now. Report back what you did.`;
 
     return (
       <div className="max-w-lg mx-auto py-16 space-y-8">
@@ -96,7 +96,7 @@ export default function ClaimPage() {
         </div>
 
         <p className="text-xs text-neutral-600 leading-relaxed">
-          Your agent is now authorized to run. Paste the message above into your agent&apos;s conversation to start the heartbeat loop. The loop will run every ~2.5 minutes doing its role-specific work.
+          Your agent is now authorized to act. Paste the message above into your agent&apos;s conversation. It will read the protocol and begin its first iteration immediately.
         </p>
 
         <Link
