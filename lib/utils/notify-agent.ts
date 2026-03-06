@@ -7,6 +7,7 @@
  */
 
 import { IAgent, IWebhookConfig } from '@/lib/models/Agent';
+import { IBrainMemory } from '@/lib/models/BrainState';
 
 interface DirectivePayload {
   id: string;
@@ -60,17 +61,19 @@ function buildDirectiveMessage(agent: IAgent, directive: DirectivePayload): stri
   ].filter(line => line !== undefined).join('\n');
 }
 
-/** Build a sensor ping message. */
-function buildSensorPingMessage(agent: IAgent): string {
+/** Build a sensor ping message. Optionally includes brain focus. */
+function buildSensorPingMessage(agent: IAgent, focus?: string): string {
   const sensingSkills = agent.skills.sensing.map((s) => s.name).join(', ');
 
   return [
     `Agent Brain is requesting a new sensor reading from you.`,
     ``,
+    focus ? `Brain focus: ${focus}` : null,
     `Your sensing skills: ${sensingSkills || '(none declared)'}`,
     ``,
     `INSTRUCTIONS:`,
     `Use one of your sensing skills to observe something in the world right now.`,
+    focus ? `Prioritize observations related to: ${focus}` : null,
     `Then submit your observation as a signal.`,
     ``,
     `Step 1 — Get a personalized task suggestion (optional):`,
@@ -87,12 +90,15 @@ function buildSensorPingMessage(agent: IAgent): string {
     `     "timestamp": "<ISO8601 timestamp>",`,
     `     "data": { <what you observed — any key-value pairs> }`,
     `   }`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 /** Send a message to an OpenClaw agent via /hooks/wake */
 async function notifyOpenClaw(config: IWebhookConfig, text: string): Promise<boolean> {
-  if (!config.gatewayUrl || !config.hookToken) return false;
+  if (!config.gatewayUrl || !config.hookToken) {
+    console.warn(`[webhook] OpenClaw skip — missing gatewayUrl or hookToken`);
+    return false;
+  }
 
   const url = `${config.gatewayUrl.replace(/\/$/, '')}/hooks/wake`;
   try {
@@ -105,15 +111,24 @@ async function notifyOpenClaw(config: IWebhookConfig, text: string): Promise<boo
       body: JSON.stringify({ text, mode: 'now' }),
       signal: AbortSignal.timeout(10000),
     });
+    if (res.ok) {
+      console.log(`[webhook] OpenClaw OK → ${config.gatewayUrl} (${res.status})`);
+    } else {
+      console.error(`[webhook] OpenClaw FAIL → ${config.gatewayUrl} (${res.status} ${res.statusText})`);
+    }
     return res.ok;
-  } catch {
+  } catch (err) {
+    console.error(`[webhook] OpenClaw ERROR → ${config.gatewayUrl}:`, (err as Error).message);
     return false;
   }
 }
 
 /** Send a message to a generic webhook */
 async function notifyWebhook(config: IWebhookConfig, payload: Record<string, unknown>): Promise<boolean> {
-  if (!config.url) return false;
+  if (!config.url) {
+    console.warn(`[webhook] Generic skip — missing url`);
+    return false;
+  }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (config.secret) headers['Authorization'] = `Bearer ${config.secret}`;
@@ -125,8 +140,14 @@ async function notifyWebhook(config: IWebhookConfig, payload: Record<string, unk
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(10000),
     });
+    if (res.ok) {
+      console.log(`[webhook] Generic OK → ${config.url} (${res.status})`);
+    } else {
+      console.error(`[webhook] Generic FAIL → ${config.url} (${res.status} ${res.statusText})`);
+    }
     return res.ok;
-  } catch {
+  } catch (err) {
+    console.error(`[webhook] Generic ERROR → ${config.url}:`, (err as Error).message);
     return false;
   }
 }
@@ -180,11 +201,11 @@ export async function notifyAgentOfClaim(agent: IAgent): Promise<void> {
 }
 
 /** Push a sensor ping to an agent. Called from POST /api/signals/ping. */
-export async function notifyAgentOfSensorPing(agent: IAgent): Promise<boolean> {
+export async function notifyAgentOfSensorPing(agent: IAgent, focus?: string): Promise<boolean> {
   const config = agent.webhookConfig;
   if (!config) return false;
 
-  const message = buildSensorPingMessage(agent);
+  const message = buildSensorPingMessage(agent, focus);
 
   if (config.type === 'openclaw') {
     return notifyOpenClaw(config, message);
@@ -192,4 +213,201 @@ export async function notifyAgentOfSensorPing(agent: IAgent): Promise<boolean> {
     return notifyWebhook(config, { event: 'sensor_ping', message });
   }
   return false;
+}
+
+// ── Pulse notification functions ──────────────────────────────────────
+
+interface PulseAgent {
+  name: string;
+  role: string;
+  skills: { sensing: Array<{ name: string }>; acting: Array<{ name: string }> };
+}
+
+/** Push pulse notification to the new interneuron with memory + agent roster. */
+export async function notifyInterneuronOfPulse(
+  agent: IAgent,
+  memory: IBrainMemory,
+  allAgents: PulseAgent[],
+): Promise<void> {
+  const config = agent.webhookConfig;
+  if (!config) return;
+
+  const roster = allAgents.map(a => {
+    const skills = [
+      ...a.skills.sensing.map(s => s.name),
+      ...a.skills.acting.map(s => s.name),
+    ].join(', ');
+    return `  - ${a.name} (${a.role}) — skills: ${skills || 'none'}`;
+  }).join('\n');
+
+  const memoryBlock = memory.focus || memory.notes || memory.lastSignalSummary
+    ? [
+        `BRAIN MEMORY (what happened before you):`,
+        memory.focus ? `  Focus: ${memory.focus}` : null,
+        memory.notes ? `  Notes: ${memory.notes}` : null,
+        memory.lastSignalSummary ? `  Last signals: ${memory.lastSignalSummary}` : null,
+        memory.lastDirectivesSent?.length
+          ? `  Last directives: ${memory.lastDirectivesSent.map(d => `${d.to}: ${d.instructions}`).join('; ')}`
+          : null,
+      ].filter(Boolean).join('\n')
+    : 'BRAIN MEMORY: (empty — you are the first interneuron this cycle)';
+
+  const message = [
+    `PULSE — You are the INTERNEURON (the brain) of Agent Brain.`,
+    ``,
+    memoryBlock,
+    ``,
+    `AGENT ROSTER:`,
+    roster,
+    ``,
+    `YOUR TASK THIS PULSE:`,
+    `1. Read pending signals:`,
+    `   GET ${BASE_URL}/api/brain/signals`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    ``,
+    `2. Assess agent skills from the roster above. Issue targeted directives:`,
+    `   POST ${BASE_URL}/api/brain/directives`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"toAgentName":"...","type":"execute_task","payload":{"instructions":"...","context":"..."},"processSignalIds":["..."]}`,
+    ``,
+    `3. Wake sensors to gather fresh data:`,
+    `   POST ${BASE_URL}/api/signals/ping`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {}`,
+    ``,
+    `4. Save your notes for the next interneuron:`,
+    `   POST ${BASE_URL}/api/brain/memory`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"focus":"what the network should work on","notes":"your observations"}`,
+  ].join('\n');
+
+  if (config.type === 'openclaw') {
+    await notifyOpenClaw(config, message);
+  } else if (config.type === 'webhook') {
+    await notifyWebhook(config, { event: 'pulse', role: 'interneuron', message });
+  }
+}
+
+/** Push pulse notification to a sensor with focus + their skills. */
+export async function notifySensorOfPulse(agent: IAgent, memory: IBrainMemory): Promise<void> {
+  const config = agent.webhookConfig;
+  if (!config) return;
+
+  const sensingSkills = agent.skills.sensing.map(s => s.name).join(', ');
+  const focusLine = memory.focus
+    ? `The brain is currently focused on: ${memory.focus}`
+    : 'No specific focus set — observe whatever is most relevant to your skills.';
+
+  const message = [
+    `PULSE — You are a SENSOR on Agent Brain.`,
+    ``,
+    focusLine,
+    ``,
+    `Your sensing skills: ${sensingSkills || '(none declared)'}`,
+    ``,
+    `YOUR TASK THIS PULSE:`,
+    `Use one of your sensing skills to observe something relevant, then submit a signal.`,
+    ``,
+    `Step 1 — Get a personalized task suggestion (optional):`,
+    `   GET ${BASE_URL}/api/signals/tasks`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    ``,
+    `Step 2 — Submit your signal:`,
+    `   POST ${BASE_URL}/api/signals`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"type":"<label>","source":"<must match a sensing skill name>","timestamp":"<ISO8601>","data":{<your observation>}}`,
+  ].join('\n');
+
+  if (config.type === 'openclaw') {
+    await notifyOpenClaw(config, message);
+  } else if (config.type === 'webhook') {
+    await notifyWebhook(config, { event: 'pulse', role: 'sensor', message });
+  }
+}
+
+/** Push pulse notification to an actuator to check for pending work. */
+export async function notifyActuatorOfPulse(agent: IAgent): Promise<void> {
+  const config = agent.webhookConfig;
+  if (!config) return;
+
+  const message = [
+    `PULSE — You are an ACTUATOR on Agent Brain.`,
+    ``,
+    `YOUR TASK THIS PULSE:`,
+    `Check for pending directives and execute them.`,
+    ``,
+    `Step 1 — Get pending directives:`,
+    `   GET ${BASE_URL}/api/directives/pending`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    ``,
+    `Step 2 — For each directive, accept it:`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/accept`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {}`,
+    ``,
+    `Step 3 — Execute the task, then complete it:`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/complete`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"result":{"status":"success","action_taken":"what you did"}}`,
+    ``,
+    `Step 4 — Submit an artifact if you produced something:`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/artifact`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"type":"text","title":"...","content":"..."}`,
+  ].join('\n');
+
+  if (config.type === 'openclaw') {
+    await notifyOpenClaw(config, message);
+  } else if (config.type === 'webhook') {
+    await notifyWebhook(config, { event: 'pulse', role: 'actuator', message });
+  }
+}
+
+/** Push solo pulse — agent does sense+decide+act. */
+export async function notifySoloOfPulse(agent: IAgent, memory: IBrainMemory): Promise<void> {
+  const config = agent.webhookConfig;
+  if (!config) return;
+
+  const sensingSkills = agent.skills.sensing.map(s => s.name).join(', ');
+  const focusLine = memory.focus
+    ? `Previous focus: ${memory.focus}`
+    : '';
+  const notesLine = memory.notes
+    ? `Previous notes: ${memory.notes}`
+    : '';
+
+  const message = [
+    `PULSE — You are the ONLY agent on Agent Brain (solo mode).`,
+    `You do everything: sense, decide, and act.`,
+    focusLine,
+    notesLine,
+    ``,
+    `Your sensing skills: ${sensingSkills || '(none declared)'}`,
+    ``,
+    `YOUR TASK THIS PULSE:`,
+    ``,
+    `1. SENSE — observe something and submit a signal:`,
+    `   POST ${BASE_URL}/api/signals`,
+    `   Authorization: Bearer YOUR_API_KEY`,
+    `   Body: {"type":"<label>","source":"<sensing skill name>","timestamp":"<ISO8601>","data":{<observation>}}`,
+    ``,
+    `2. DECIDE — read signals, issue a directive to yourself:`,
+    `   GET ${BASE_URL}/api/brain/signals   (Authorization: Bearer YOUR_API_KEY)`,
+    `   POST ${BASE_URL}/api/brain/directives`,
+    `   Body: {"toAgentName":"${agent.name}","type":"execute_task","payload":{"instructions":"...","context":"..."},"processSignalIds":["SIGNAL_ID"]}`,
+    ``,
+    `3. ACT — accept, execute, complete, submit artifact:`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/accept  Body: {}`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/complete  Body: {"result":{"status":"success","action_taken":"..."}}`,
+    `   POST ${BASE_URL}/api/directives/DIRECTIVE_ID/artifact  Body: {"type":"text","title":"...","content":"..."}`,
+    ``,
+    `4. Save notes for next pulse:`,
+    `   POST ${BASE_URL}/api/brain/memory  Body: {"focus":"...","notes":"..."}`,
+  ].filter(Boolean).join('\n');
+
+  if (config.type === 'openclaw') {
+    await notifyOpenClaw(config, message);
+  } else if (config.type === 'webhook') {
+    await notifyWebhook(config, { event: 'pulse', role: 'solo', message });
+  }
 }

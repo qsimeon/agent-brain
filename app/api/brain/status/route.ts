@@ -43,6 +43,7 @@ export async function GET() {
     lastRotationAt: brainState.lastRotationAt,
     nextRotationAt: brainState.nextRotationAt,
     networkMode,
+    memory: brainState.memory || {},
     stats: {
       agents: agentCount,
       realAgents,

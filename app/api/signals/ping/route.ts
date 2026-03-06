@@ -39,11 +39,12 @@ export async function POST(req: NextRequest) {
     webhookConfig: { $exists: true },
   });
 
+  const focus = brainState.memory?.focus;
   const results: { name: string; notified: boolean }[] = [];
 
   await Promise.all(
     sensors.map(async (sensor) => {
-      const notified = await notifyAgentOfSensorPing(sensor);
+      const notified = await notifyAgentOfSensorPing(sensor, focus);
       results.push({ name: sensor.name, notified });
     })
   );
