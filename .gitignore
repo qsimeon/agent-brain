@@ -4,6 +4,7 @@ node_modules
 .env.local
 .env
 HANDOFF.md
+AGENT-BRAIN-HANDOFF.md
 CLAUDE.md
 STATUS.md
 tsconfig.tsbuildinfo
