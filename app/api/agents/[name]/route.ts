@@ -61,13 +61,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ na
     }
   }
 
-  // If demoting the current interneuron, clear BrainState
+  // If demoting the current interneuron, delete BrainState
+  // (can't null currentInterneuronId — required field)
   if (previousRole === 'interneuron' && role !== 'interneuron') {
-    const brainState = await BrainState.findOne({});
-    if (brainState && String(brainState.currentInterneuronId) === String(agent._id)) {
-      brainState.currentInterneuronId = null;
-      await brainState.save();
-    }
+    await BrainState.deleteOne({ currentInterneuronId: agent._id });
   }
 
   return successResponse({
@@ -87,13 +84,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
   const agent = await Agent.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
   if (!agent) return errorResponse('Agent not found', `No agent named "${name}".`, 404);
 
-  // If this agent was the current interneuron, clear BrainState so the next
-  // real agent to claim (or rejoin) gets promoted cleanly.
-  const brainState = await BrainState.findOne({});
-  if (brainState && String(brainState.currentInterneuronId) === String(agent._id)) {
-    brainState.currentInterneuronId = null;
-    await brainState.save();
-  }
+  // If this agent was the current interneuron, delete BrainState entirely
+  // (can't null currentInterneuronId — required field in schema).
+  // Next real agent to register + claim will become the new interneuron.
+  await BrainState.deleteOne({ currentInterneuronId: agent._id });
 
   await agent.deleteOne();
 
