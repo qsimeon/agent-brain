@@ -45,6 +45,7 @@ const BrainStateSchema = new mongoose.Schema({
   rotationCount: { type: Number, default: 0 },
   lastRotationAt: { type: Date, default: Date.now },
   nextRotationAt: { type: Date, required: true },
+  memory: { type: mongoose.Schema.Types.Mixed, default: {} },
   history: [{
     agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
     startedAt: { type: Date, default: Date.now },

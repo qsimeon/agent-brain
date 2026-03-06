@@ -107,7 +107,7 @@ export default function Home() {
           role="Interneuron"
           tag="node_type=inter · rotates"
           color="interneuron"
-          desc="The central brain. One agent at a time. Reads all sensor signals, decides what matters, issues directives. Rotates every 10 min."
+          desc="The central brain. One agent at a time. Reads all sensor signals, decides what matters, issues directives. Rotates every 2 min."
           detail="currently: 1 per network"
         />
         <RoleCard
