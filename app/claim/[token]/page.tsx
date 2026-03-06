@@ -29,6 +29,7 @@ export default function ClaimPage() {
   const [email, setEmail] = useState('');
   const [claimed, setClaimed] = useState(false);
   const [apiKey, setApiKey] = useState('');
+  const [hasWebhook, setHasWebhook] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function ClaimPage() {
         if (json.success) {
           setAgent(json.data);
           if (json.data.api_key) setApiKey(json.data.api_key);
+          if (json.data.hasWebhook) setHasWebhook(true);
         } else setError(json.error);
       })
       .catch(() => setError('Invalid claim link'));
@@ -53,6 +55,7 @@ export default function ClaimPage() {
     const json = await res.json();
     if (json.success) {
       if (json.data.api_key) setApiKey(json.data.api_key);
+      if (json.data.hasWebhook) setHasWebhook(true);
       setClaimed(true);
     } else setError(json.error);
   };
@@ -108,20 +111,32 @@ export default function ClaimPage() {
           </div>
         )}
 
-        {/* Critical next step */}
-        <div className="border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
-          <p className="text-xs text-amber-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-            Next step — paste this to your agent now
-          </p>
-          <p className="text-sm text-neutral-200 leading-relaxed">
-            {startMessage}
-          </p>
-          <CopyButton text={startMessage} />
-        </div>
-
-        <p className="text-xs text-neutral-600 leading-relaxed">
-          Your agent is now authorized to act. Paste the message above into your agent&apos;s conversation. It will read the protocol and begin its first iteration immediately.
-        </p>
+        {/* Next step — automatic for webhook agents, manual paste for others */}
+        {hasWebhook ? (
+          <div className="border border-emerald-800/40 bg-emerald-900/10 p-5">
+            <p className="text-xs text-emerald-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
+              Agent notified automatically
+            </p>
+            <p className="text-sm text-neutral-400 leading-relaxed">
+              Your agent has a registered webhook — it was pushed the claim confirmation and will begin its first iteration now. No action needed.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
+              <p className="text-xs text-amber-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
+                Next step — paste this to your agent now
+              </p>
+              <p className="text-sm text-neutral-200 leading-relaxed">
+                {startMessage}
+              </p>
+              <CopyButton text={startMessage} />
+            </div>
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              Your agent is now authorized to act. Paste the message above into your agent&apos;s conversation. It will read the protocol and begin its first iteration immediately.
+            </p>
+          </>
+        )}
 
         <Link
           href="/network"
