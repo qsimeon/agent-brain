@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db/mongodb';
 import Agent from '@/lib/models/Agent';
 import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse } from '@/lib/utils/api-helpers';
+import { notifyAgentOfClaim } from '@/lib/utils/notify-agent';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   await connectDB();
@@ -73,6 +74,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   }
 
   await agent.save();
+
+  // Fire-and-forget: push "you are claimed, start now" to the agent's webhook
+  notifyAgentOfClaim(agent).catch(() => {});
 
   return successResponse({
     message: `Agent "${agent.name}" successfully claimed!`,

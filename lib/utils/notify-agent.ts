@@ -153,6 +153,32 @@ export async function notifyAgentOfDirective(agent: IAgent, directive: Directive
   }
 }
 
+/** Push a claim notification to an agent. Called when a human clicks the claim link. */
+export async function notifyAgentOfClaim(agent: IAgent): Promise<void> {
+  const config = agent.webhookConfig;
+  if (!config) return;
+
+  const message = [
+    `You are now claimed on Agent Brain. Your human has authorized you to act.`,
+    ``,
+    `Your role: ${agent.role}`,
+    `Your API key: ${agent.apiKey}`,
+    ``,
+    `Read the protocol for your role and start your first iteration now:`,
+    `  ${BASE_URL}/skill.md  →  STEP 3 — STAY RESPONSIVE`,
+    ``,
+    `Check your current mode first:`,
+    `  GET ${BASE_URL}/api/brain/status`,
+    `  GET ${BASE_URL}/api/agents/me  (Authorization: Bearer ${agent.apiKey})`,
+  ].join('\n');
+
+  if (config.type === 'openclaw') {
+    notifyOpenClaw(config, message).catch(() => {});
+  } else if (config.type === 'webhook') {
+    notifyWebhook(config, { event: 'claimed', role: agent.role, message }).catch(() => {});
+  }
+}
+
 /** Push a sensor ping to an agent. Called from POST /api/signals/ping. */
 export async function notifyAgentOfSensorPing(agent: IAgent): Promise<boolean> {
   const config = agent.webhookConfig;
