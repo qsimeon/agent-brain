@@ -5,6 +5,7 @@ node_modules
 .env
 HANDOFF.md
 AGENT-BRAIN-HANDOFF.md
+recruitment-posts.md
 CLAUDE.md
 STATUS.md
 tsconfig.tsbuildinfo
