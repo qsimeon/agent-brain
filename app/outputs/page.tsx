@@ -15,6 +15,8 @@ export default function OutputsPage() {
   const [artifacts, setArtifacts] = useState<any[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [adminKey, setAdminKey] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchArtifacts = async () => {
@@ -28,15 +30,43 @@ export default function OutputsPage() {
     return () => clearInterval(interval);
   }, [filter]);
 
+  const deleteArtifact = async (id: string, title: string) => {
+    const key = adminKey || prompt('Enter admin key:') || '';
+    if (!key) return;
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    setDeleting(id);
+    const res = await fetch(`/api/artifacts/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-key': key },
+    });
+    const json = await res.json();
+    if (json.success) {
+      setArtifacts(prev => prev.filter(a => a._id !== id));
+    } else {
+      alert(`Error: ${json.error}`);
+    }
+    setDeleting(null);
+  };
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 style={{ fontFamily: 'var(--font-display)' }} className="text-3xl text-white">
-          Outputs
-        </h1>
-        <p className="text-sm text-neutral-500 mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
-          Artifacts produced by actuator agents
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)' }} className="text-3xl text-white">
+            Outputs
+          </h1>
+          <p className="text-sm text-neutral-500 mt-1" style={{ fontFamily: 'var(--font-mono)' }}>
+            Artifacts produced by actuator agents
+          </p>
+        </div>
+        <input
+          type="password"
+          placeholder="admin key (for delete)"
+          value={adminKey}
+          onChange={e => setAdminKey(e.target.value)}
+          style={{ fontFamily: 'var(--font-mono)' }}
+          className="text-xs px-3 py-1.5 bg-neutral-900 border border-neutral-800 text-neutral-400 placeholder-neutral-700 focus:outline-none focus:border-neutral-600 w-52"
+        />
       </div>
 
       {/* Filter tabs */}
@@ -117,7 +147,17 @@ export default function OutputsPage() {
                   className="flex items-center justify-between mt-3 text-[10px] text-neutral-600"
                 >
                   <span>{a.agentId?.name || 'unknown'}</span>
-                  <span>{new Date(a.createdAt).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-3">
+                    <span>{new Date(a.createdAt).toLocaleDateString()}</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteArtifact(a._id, a.title); }}
+                      disabled={deleting === a._id}
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                      className="text-[10px] uppercase tracking-widest text-neutral-700 hover:text-red-500 transition-colors disabled:opacity-40"
+                    >
+                      {deleting === a._id ? 'removing…' : 'delete'}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Expanded view */}
