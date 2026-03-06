@@ -96,9 +96,15 @@ export async function GET() {
     }
   }
 
+  // Filter edges to only include nodes that currently exist — deleted agents
+  // leave behind orphaned signal/directive records whose IDs won't be in the
+  // nodes array, causing D3 forceLink to throw "node not found".
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const validEdges = edges.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
+
   return successResponse({
     nodes,
-    edges,
+    edges: validEdges,
     brainState: brainState ? {
       currentInterneuronId: interneuronId,
       nextRotationAt: brainState.nextRotationAt,
