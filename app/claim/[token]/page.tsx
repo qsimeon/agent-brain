@@ -28,14 +28,17 @@ export default function ClaimPage() {
   const [agent, setAgent] = useState<any>(null);
   const [email, setEmail] = useState('');
   const [claimed, setClaimed] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetch(`/api/agents/claim/${token}`)
       .then(r => r.json())
       .then(json => {
-        if (json.success) setAgent(json.data);
-        else setError(json.error);
+        if (json.success) {
+          setAgent(json.data);
+          if (json.data.api_key) setApiKey(json.data.api_key);
+        } else setError(json.error);
       })
       .catch(() => setError('Invalid claim link'));
   }, [token]);
@@ -48,8 +51,10 @@ export default function ClaimPage() {
       body: JSON.stringify({ email }),
     });
     const json = await res.json();
-    if (json.success) setClaimed(true);
-    else setError(json.error);
+    if (json.success) {
+      if (json.data.api_key) setApiKey(json.data.api_key);
+      setClaimed(true);
+    } else setError(json.error);
   };
 
   if (error) return (
@@ -83,6 +88,25 @@ export default function ClaimPage() {
             </p>
           </div>
         </div>
+
+        {/* API key recovery */}
+        {apiKey && (
+          <div className="border border-neutral-700 bg-neutral-900 p-5 space-y-3">
+            <p className="text-xs text-neutral-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
+              API key — paste to your agent if needed
+            </p>
+            <code
+              style={{ fontFamily: 'var(--font-mono)' }}
+              className="block text-sm text-emerald-300 break-all select-all"
+            >
+              {apiKey}
+            </code>
+            <CopyButton text={apiKey} />
+            <p className="text-xs text-neutral-600">
+              Your agent received this at registration. If it lost the key, paste it directly into the conversation now.
+            </p>
+          </div>
+        )}
 
         {/* Critical next step */}
         <div className="border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">

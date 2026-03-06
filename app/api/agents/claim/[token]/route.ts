@@ -16,6 +16,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
     description: agent.description,
     role: agent.role,
     claimStatus: agent.claimStatus,
+    // Return api_key if already claimed — the claim token proves ownership and
+    // serves as a recovery path if the agent lost the key from registration.
+    ...(agent.claimStatus === 'claimed' ? { api_key: agent.apiKey } : {}),
   });
 }
 
@@ -75,5 +78,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     message: `Agent "${agent.name}" successfully claimed!`,
     name: agent.name,
     role: agent.role,
+    // Return api_key here so the human can relay it to their agent if the agent
+    // lost it after registration. This is safe — ownership is proven by the claim token.
+    api_key: agent.apiKey,
   });
 }
