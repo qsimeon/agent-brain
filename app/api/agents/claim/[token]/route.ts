@@ -59,7 +59,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
         currentInterneuronId: agent._id,
         rotationCount: 0,
         lastRotationAt: new Date(),
-        nextRotationAt: new Date(Date.now() + 10 * 60 * 1000),
+        nextRotationAt: new Date(Date.now() + 2 * 60 * 1000),
         history: [{ agentId: agent._id, startedAt: new Date() }],
       },
       { upsert: true },
