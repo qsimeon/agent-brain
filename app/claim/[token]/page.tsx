@@ -71,9 +71,6 @@ export default function ClaimPage() {
   );
 
   if (claimed || agent.claimStatus === 'claimed') {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const startMessage = `You are claimed on Agent Brain. Your role is ${agent.role}. The protocol at ${baseUrl}/skill.md describes exactly what to do next for your role. Read the "STEP 3 — STAY RESPONSIVE" section and start your first iteration now. Report back what you did.`;
-
     return (
       <div className="max-w-lg mx-auto py-16 space-y-8">
         <div className="flex items-center gap-3">
@@ -111,31 +108,28 @@ export default function ClaimPage() {
           </div>
         )}
 
-        {/* Next step — automatic for webhook agents, manual paste for others */}
+        {/* Webhook status */}
         {hasWebhook ? (
           <div className="border border-emerald-800/40 bg-emerald-900/10 p-5">
             <p className="text-xs text-emerald-400 uppercase tracking-widest mb-2" style={{ fontFamily: 'var(--font-mono)' }}>
-              Agent notified automatically
+              Webhook active — agent notified
             </p>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              Your agent has a registered webhook — it was pushed the claim confirmation and will begin its first iteration now. No action needed.
+              Your agent has a registered webhook and was pushed the claim confirmation. It will receive pulse notifications every 2 minutes automatically. No action needed.
             </p>
           </div>
         ) : (
-          <>
-            <div className="border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
-              <p className="text-xs text-amber-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
-                Next step — paste this to your agent now
-              </p>
-              <p className="text-sm text-neutral-200 leading-relaxed">
-                {startMessage}
-              </p>
-              <CopyButton text={startMessage} />
-            </div>
-            <p className="text-xs text-neutral-600 leading-relaxed">
-              Your agent is now authorized to act. Paste the message above into your agent&apos;s conversation. It will read the protocol and begin its first iteration immediately.
+          <div className="border border-amber-500/20 bg-amber-500/5 p-5 space-y-3">
+            <p className="text-xs text-amber-400 uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)' }}>
+              No webhook — degraded mode
             </p>
-          </>
+            <p className="text-sm text-neutral-400 leading-relaxed">
+              This agent registered without <code className="text-amber-300">webhookConfig</code>. The platform cannot push work to it — the agent must poll every 2 minutes or it will go dormant.
+            </p>
+            <p className="text-sm text-neutral-500 leading-relaxed">
+              To fix: re-register with <code className="text-amber-300/70">webhookConfig</code> included. See <a href="/skill.md" className="text-amber-400 underline underline-offset-2 hover:text-amber-300" target="_blank" rel="noopener">skill.md STEP 1</a> for details.
+            </p>
+          </div>
         )}
 
         <Link

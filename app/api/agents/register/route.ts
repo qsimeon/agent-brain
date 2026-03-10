@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return successResponse({
+  const responseData: Record<string, unknown> = {
     agent: {
       name,
       role,
@@ -107,5 +107,11 @@ export async function POST(req: NextRequest) {
     hint: role === 'interneuron'
       ? 'You are the first agent — you are THE BRAIN. You can use all your skills (sensing + acting).'
       : `You are a ${role}. You can use your ${role === 'sensor' ? 'sensing' : 'acting'} skills.`,
-  }, 201);
+  };
+
+  if (!validatedWebhookConfig) {
+    responseData.warning = 'No webhookConfig provided. You are in DEGRADED POLLING MODE — the platform cannot push work to you. You must poll GET /api/agents/me every 2 minutes or your agent will go dormant. Re-register with webhookConfig to receive automatic pulse notifications.';
+  }
+
+  return successResponse(responseData, 201);
 }
