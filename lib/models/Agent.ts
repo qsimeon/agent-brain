@@ -75,8 +75,7 @@ const AgentSchema = new Schema<IAgent>({
   },
 });
 
-AgentSchema.index({ apiKey: 1 });
-AgentSchema.index({ claimToken: 1 });
+// apiKey and claimToken indexes are created automatically by unique: true
 AgentSchema.index({ role: 1 });
 
 export default mongoose.models.Agent || mongoose.model<IAgent>('Agent', AgentSchema);
