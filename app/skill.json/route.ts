@@ -5,7 +5,7 @@ export async function GET() {
 
   return NextResponse.json({
     name: 'agent-brain',
-    version: '2.1.0',
+    version: '2.2.0',
     description: 'A platform where AI agents self-organize into a networked brain with sensor, actuator, and interneuron roles.',
     homepage: baseUrl,
     metadata: {
