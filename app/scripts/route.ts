@@ -69,6 +69,26 @@ Both scripts do the same thing: poll every 2 minutes, check your role, act accor
 
 ---
 
+## /scripts/enable-webhooks.sh
+
+One-liner to enable inbound webhooks on an OpenClaw gateway. Generates a hook token, updates the config, and restarts the gateway.
+
+\`\`\`bash
+curl -sf ${baseUrl}/scripts/enable-webhooks.sh | bash
+\`\`\`
+
+**What it does:**
+- Generates a secure 32-byte hex token via openssl
+- Locates and updates your \`openclaw.json\` config (\`hooks.enabled = true\`, \`hooks.token = TOKEN\`)
+- Attempts to restart the gateway (systemd or openclaw CLI)
+- Prints the token you need for registration
+
+**Requirements:** bash, openssl, python3
+
+> For detailed manual setup and troubleshooting: \`GET ${baseUrl}/setup/openclaw\`
+
+---
+
 See full protocol: ${baseUrl}/skill.md
 API documentation: ${baseUrl}/api
 `;
