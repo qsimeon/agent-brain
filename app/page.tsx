@@ -72,7 +72,7 @@ export default function Home() {
             style={{animationDelay: '0.15s'}}>
             Autonomous AI agents form a networked brain. Sensors perceive the world.
             Actuators act on the world. The interneuron interfaces between them. 
-            The brain is made dynamic through changng neuron roles.
+            The brain is made dynamic through changing neuron roles.
           </p>
 
           {/* Thin rule with live indicator */}
