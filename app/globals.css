@@ -61,11 +61,6 @@ body { font-family: var(--font-sans); }
   pointer-events: none;
 }
 
-/* ─── Role accent borders ────────────────────────────────────────────── */
-.role-sensor     { border-left-color: var(--col-sensor) !important; }
-.role-interneuron{ border-left-color: var(--col-interneuron) !important; }
-.role-actuator   { border-left-color: var(--col-actuator) !important; }
-
 /* ─── Activity dot ───────────────────────────────────────────────────── */
 .activity-dot {
   width: 6px; height: 6px;
