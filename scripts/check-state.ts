@@ -94,6 +94,7 @@ async function checkBrainState() {
     console.log(`Role:       ${agent.role}`);
     console.log(`Claim:      ${agent.claimStatus}`);
     console.log(`Last Active: ${agent.lastActive}`);
+    console.log(`Missed:     ${(agent as any).missedPulses || 0}/2 pulses`);
     console.log(`Metadata:   ${JSON.stringify(agent.metadata)}`);
     const s = agent.skills as any;
     if (s) {

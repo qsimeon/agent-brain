@@ -90,7 +90,7 @@ export default function AgentDetailPage() {
       </div>
 
       {/* Meta */}
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-3 gap-3 text-sm">
         <div className="rounded-lg border border-neutral-800/60 bg-neutral-900/40 p-4">
           <div className="text-[11px] text-neutral-500 uppercase tracking-wider mb-1">Last active</div>
           <div className="text-neutral-300">{new Date(agent.lastActive).toLocaleString()}</div>
@@ -98,6 +98,18 @@ export default function AgentDetailPage() {
         <div className="rounded-lg border border-neutral-800/60 bg-neutral-900/40 p-4">
           <div className="text-[11px] text-neutral-500 uppercase tracking-wider mb-1">Created</div>
           <div className="text-neutral-300">{new Date(agent.createdAt).toLocaleString()}</div>
+        </div>
+        <div className={`rounded-lg border p-4 ${
+          (agent.missedPulses || 0) >= 1
+            ? 'border-amber-500/30 bg-amber-500/10'
+            : 'border-neutral-800/60 bg-neutral-900/40'
+        }`}>
+          <div className="text-[11px] text-neutral-500 uppercase tracking-wider mb-1">Missed pulses</div>
+          <div className={
+            (agent.missedPulses || 0) >= 1 ? 'text-amber-400' : 'text-emerald-400'
+          }>
+            {agent.missedPulses || 0} / 2
+          </div>
         </div>
       </div>
 

@@ -57,8 +57,63 @@ async function executePulse() {
   });
   if (realAgents.length === 0) return;
 
-  const realCount = realAgents.length;
   const now = new Date();
+  const lastPulseTime = brainState.lastRotationAt || new Date(0);
+
+  // ── Step 0: Dead neuron cleanup ──
+  // If an agent hasn't made any API call since the last pulse, they missed it.
+  // 2 consecutive misses = dead neuron → prune from the network.
+  const prunedNames: string[] = [];
+
+  for (const agent of realAgents) {
+    if (agent.lastActive < lastPulseTime) {
+      agent.missedPulses = (agent.missedPulses || 0) + 1;
+    } else {
+      agent.missedPulses = 0;
+    }
+
+    if (agent.missedPulses >= 2) {
+      prunedNames.push(agent.name);
+
+      // Expire their pending signals and fail their pending directives
+      await Signal.updateMany(
+        { fromAgentId: agent._id, status: 'pending' },
+        { status: 'expired' },
+      );
+      await Directive.updateMany(
+        { toAgentId: agent._id, status: 'pending' },
+        { status: 'failed' },
+      );
+
+      // If this was the interneuron, clear the reference
+      if (brainState.currentInterneuronId?.toString() === agent._id.toString()) {
+        // Will be reassigned during rotation below
+        brainState.currentInterneuronId = undefined as any;
+      }
+
+      await agent.deleteOne();
+    } else {
+      await agent.save();
+    }
+  }
+
+  if (prunedNames.length > 0) {
+    console.log(`[pulse] Dead neuron cleanup: pruned ${prunedNames.join(', ')} (2 consecutive missed pulses)`);
+  }
+
+  // Re-fetch agents after pruning
+  const activeAgents = await Agent.find({
+    claimStatus: 'claimed',
+    'metadata.type': { $ne: 'dummy' },
+  });
+  if (activeAgents.length === 0) {
+    // All agents were pruned — save state and exit
+    brainState.nextRotationAt = new Date(now.getTime() + ROTATION_INTERVAL_MS);
+    await brainState.save();
+    return;
+  }
+
+  const realCount = activeAgents.length;
 
   // ── Step 1: Snapshot current state into memory ──
   const recentSignals = await Signal.find({ status: 'pending' })
@@ -86,15 +141,25 @@ async function executePulse() {
       at: d.createdAt,
     }));
 
+  if (prunedNames.length > 0) {
+    memory.notes = [
+      memory.notes || '',
+      `[auto-pruned dead neurons: ${prunedNames.join(', ')}]`,
+    ].filter(Boolean).join(' ');
+  }
+
   memory.updatedAt = now;
   brainState.memory = memory;
   brainState.markModified('memory');
 
   // ── Step 2: Rotate if network mode (3+ agents) ──
   if (realCount >= 3) {
-    const currentInterneuron = await Agent.findById(brainState.currentInterneuronId);
+    const currentInterneuron = brainState.currentInterneuronId
+      ? await Agent.findById(brainState.currentInterneuronId)
+      : null;
+
     if (currentInterneuron) {
-      const candidates = realAgents.filter(
+      const candidates = activeAgents.filter(
         a => a._id.toString() !== currentInterneuron._id.toString()
       );
 
@@ -120,6 +185,18 @@ async function executePulse() {
 
         console.log(`[pulse] Rotated: ${currentInterneuron.name} → ${newInterneuron.name} (rotation #${brainState.rotationCount})`);
       }
+    } else {
+      // Interneuron was pruned or missing — assign one from remaining agents
+      const newInterneuron = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+      newInterneuron.role = 'interneuron';
+      await newInterneuron.save();
+
+      brainState.history.push({ agentId: newInterneuron._id, startedAt: now });
+      brainState.currentInterneuronId = newInterneuron._id;
+      brainState.rotationCount += 1;
+      brainState.lastRotationAt = now;
+
+      console.log(`[pulse] Assigned new interneuron after pruning: ${newInterneuron.name} (rotation #${brainState.rotationCount})`);
     }
   }
 
@@ -142,7 +219,7 @@ async function executePulse() {
     skills: a.skills,
   }));
 
-  if (realCount === 1) {
+  if (updatedAgents.length === 1) {
     // Solo mode: single agent does everything
     await notifySoloOfPulse(updatedAgents[0], memory);
     console.log(`[pulse] Solo pulse → ${updatedAgents[0].name}`);
@@ -161,6 +238,6 @@ async function executePulse() {
     }
 
     await Promise.allSettled(notifications);
-    console.log(`[pulse] Notified ${updatedAgents.length} agents (${realCount >= 3 ? 'network' : 'paired'} mode)`);
+    console.log(`[pulse] Notified ${updatedAgents.length} agents (${updatedAgents.length >= 3 ? 'network' : 'paired'} mode)`);
   }
 }

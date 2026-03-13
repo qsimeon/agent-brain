@@ -31,6 +31,7 @@ export interface IAgent extends Document {
     acting: ISkill[];
   };
   lastActive: Date;
+  missedPulses: number;
 }
 
 const AgentSchema = new Schema<IAgent>({
@@ -64,6 +65,7 @@ const AgentSchema = new Schema<IAgent>({
     secret: String,
   },
   lastActive: { type: Date, default: Date.now },
+  missedPulses: { type: Number, default: 0 },
 }, {
   timestamps: true,
   toJSON: {

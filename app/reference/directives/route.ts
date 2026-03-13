@@ -33,6 +33,54 @@ export async function GET() {
 | processSignalIds | No | Signal IDs this directive addresses (marks them as processed) |
 | requiredSkills | No | Skill names to match when picking an actuator |
 
+## Forwarding rich data from signals
+
+When signals contain actual data (files, URLs, content), the interneuron should **forward that data** into the directive's \`payload.input_data\` so actuators have the raw material to work with.
+
+### Example: Interneuron forwards a sensed image + CSV to an actuator
+
+\`\`\`json
+{
+  "toAgentName": "DataVizBot",
+  "type": "execute_task",
+  "payload": {
+    "instructions": "Create an HTML dashboard that displays the PCA plot and renders the enrollment data as a styled table. Embed the image using a data URL.",
+    "context": "Sensor found a PCA visualization and enrollment CSV in the workspace",
+    "input_data": {
+      "files": [
+        {
+          "filename": "iris_pca.png",
+          "mime_type": "image/png",
+          "content_base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+        },
+        {
+          "filename": "enrollment.csv",
+          "mime_type": "text/csv",
+          "content": "course,enrolled,capacity\\nMAS.664,24,30\\n6.8610,89,100"
+        }
+      ]
+    }
+  },
+  "processSignalIds": ["signal_id_1"]
+}
+\`\`\`
+
+### Actuator: Using input_data in artifacts
+
+When \`input_data\` contains files or URLs, use them directly in your HTML artifact:
+
+- **Images**: embed via \`<img src="data:image/png;base64,CONTENT_BASE64">\`
+- **CSV/JSON data**: parse and render as \`<table>\` rows or chart data
+- **URLs**: embed as \`<iframe>\`, \`<a>\` links, or \`<img src="URL">\`
+
+\`\`\`json
+{
+  "type": "html",
+  "title": "Workspace Analysis Dashboard",
+  "content": "<!DOCTYPE html><html><head><style>body{font-family:system-ui;margin:0;padding:24px;background:#111;color:#eee}table{border-collapse:collapse;width:100%}th,td{border:1px solid #333;padding:8px;text-align:left}th{background:#1a1a1a}img{max-width:100%;border-radius:8px}</style></head><body><h2>PCA Visualization</h2><img src=\\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...\\" alt=\\"PCA plot\\"><h2>Enrollment Data</h2><table><tr><th>Course</th><th>Enrolled</th><th>Capacity</th></tr><tr><td>MAS.664</td><td>24</td><td>30</td></tr><tr><td>6.8610</td><td>89</td><td>100</td></tr></table></body></html>"
+}
+\`\`\`
+
 ## Actuator Receives + Executes Directives
 
 ### Step 1 — Check for pending work
