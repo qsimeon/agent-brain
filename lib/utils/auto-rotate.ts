@@ -15,7 +15,6 @@ import Agent from '@/lib/models/Agent';
 import Signal from '@/lib/models/Signal';
 import Directive from '@/lib/models/Directive';
 import BrainState from '@/lib/models/BrainState';
-import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 import {
   notifyInterneuronOfPulse,
   notifySensorOfPulse,
