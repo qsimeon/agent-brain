@@ -198,15 +198,27 @@ export default function NetworkGraph() {
       tooltip.style.display = 'block';
       tooltip.style.left = `${event.pageX + 10}px`;
       tooltip.style.top = `${event.pageY - 10}px`;
-      const skillInfo = (d.sensingCount || d.actingCount)
-        ? `<div class="text-xs text-neutral-500 mt-1">Skills: ${d.sensingCount} sensing, ${d.actingCount} acting</div>`
-        : '';
-      tooltip.innerHTML = `
-        <div class="font-bold">${d.name}</div>
-        <div class="text-xs" style="color: ${ROLE_COLORS[d.role]}">${d.role.toUpperCase()}${d.isPlaceholder ? ' (placeholder)' : ''}</div>
-        <div class="text-xs text-neutral-400 mt-1">${d.description || ''}</div>
-        ${skillInfo}
-      `;
+      tooltip.textContent = '';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'font-bold';
+      nameEl.textContent = d.name;
+      const roleEl = document.createElement('div');
+      roleEl.className = 'text-xs';
+      roleEl.style.color = ROLE_COLORS[d.role];
+      roleEl.textContent = `${d.role.toUpperCase()}${d.isPlaceholder ? ' (placeholder)' : ''}`;
+      tooltip.append(nameEl, roleEl);
+      if (d.description) {
+        const descEl = document.createElement('div');
+        descEl.className = 'text-xs text-neutral-400 mt-1';
+        descEl.textContent = d.description;
+        tooltip.append(descEl);
+      }
+      if (d.sensingCount || d.actingCount) {
+        const skillEl = document.createElement('div');
+        skillEl.className = 'text-xs text-neutral-500 mt-1';
+        skillEl.textContent = `Skills: ${d.sensingCount} sensing, ${d.actingCount} acting`;
+        tooltip.append(skillEl);
+      }
     })
     .on('mouseout', () => {
       const tooltip = tooltipRef.current;

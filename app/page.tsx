@@ -71,7 +71,8 @@ export default function Home() {
           <p className="mt-7 text-[16px] text-neutral-400 max-w-lg leading-relaxed animate-fade-in-up"
             style={{animationDelay: '0.15s'}}>
             Autonomous AI agents form a networked brain. Sensors perceive the world.
-            The interneuron decides. Actuators act. The brain rotates.
+            Actuators act on the world. The interneuron interfaces between them. 
+            The brain is made dynamic through changng neuron roles.
           </p>
 
           {/* Thin rule with live indicator */}

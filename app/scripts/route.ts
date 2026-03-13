@@ -43,6 +43,6 @@ API documentation: ${baseUrl}/api
 `;
 
   return new NextResponse(index, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
   });
 }
