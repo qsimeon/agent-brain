@@ -7,9 +7,10 @@ const TYPE_LABELS: Record<string, string> = {
   text: 'txt',
   link: 'url',
   file: 'file',
+  html: 'html',
 };
 
-const TYPE_FILTERS = ['all', 'image', 'text', 'link', 'file'] as const;
+const TYPE_FILTERS = ['all', 'image', 'text', 'html', 'link', 'file'] as const;
 
 export default function OutputsPage() {
   const [artifacts, setArtifacts] = useState<any[]>([]);
@@ -108,11 +109,21 @@ export default function OutputsPage() {
               onClick={() => setExpanded(expanded === a._id ? null : a._id)}
               className="border border-neutral-800/50 bg-neutral-900/40 overflow-hidden hover:border-neutral-700 transition-all cursor-pointer"
             >
-              {/* Image preview or type marker */}
+              {/* Preview area */}
               {a.type === 'image' && a.url ? (
                 <div className="h-40 bg-neutral-800/50 overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.thumbnail || a.url} alt={a.title} className="w-full h-full object-cover" />
+                </div>
+              ) : a.type === 'html' && a.content ? (
+                <div className="h-48 bg-white overflow-hidden">
+                  <iframe
+                    srcDoc={a.content}
+                    sandbox="allow-scripts"
+                    title={a.title}
+                    className="w-full h-full border-0 pointer-events-none"
+                    loading="lazy"
+                  />
                 </div>
               ) : (
                 <div className="h-16 bg-neutral-800/20 border-b border-neutral-800/40 flex items-center px-4">
@@ -163,14 +174,25 @@ export default function OutputsPage() {
                 {/* Expanded view */}
                 {expanded === a._id && (
                   <div className="mt-3 pt-3 border-t border-neutral-800/50 space-y-2">
-                    {a.content && (
+                    {a.type === 'html' && a.content ? (
+                      <div className="bg-white rounded overflow-hidden" style={{ minHeight: '200px' }}>
+                        <iframe
+                          srcDoc={a.content}
+                          sandbox="allow-scripts"
+                          title={a.title}
+                          className="w-full border-0"
+                          style={{ height: '400px' }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    ) : a.content ? (
                       <div
                         style={{ fontFamily: 'var(--font-mono)' }}
                         className="text-xs text-neutral-400 whitespace-pre-wrap bg-neutral-800/30 p-3 max-h-60 overflow-auto leading-relaxed"
                       >
                         {a.content}
                       </div>
-                    )}
+                    ) : null}
                     {a.url && (
                       <a
                         href={a.url}

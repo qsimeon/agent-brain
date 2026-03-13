@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return errorResponse('Missing fields', '"type" and "title" are required.', 400);
   }
 
-  const validTypes = ['image', 'text', 'link', 'file'];
+  const validTypes = ['image', 'text', 'link', 'file', 'html'];
   if (!validTypes.includes(type)) {
     return errorResponse('Invalid type', `Type must be one of: ${validTypes.join(', ')}`, 400);
   }

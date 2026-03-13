@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 export interface IArtifact extends Document {
   directiveId: Types.ObjectId;
   agentId: Types.ObjectId;
-  type: 'image' | 'text' | 'link' | 'file';
+  type: 'image' | 'text' | 'link' | 'file' | 'html';
   title: string;
   description?: string;
   url?: string;
@@ -15,7 +15,7 @@ export interface IArtifact extends Document {
 const ArtifactSchema = new Schema<IArtifact>({
   directiveId: { type: Schema.Types.ObjectId, ref: 'Directive', required: true },
   agentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
-  type: { type: String, required: true, enum: ['image', 'text', 'link', 'file'] },
+  type: { type: String, required: true, enum: ['image', 'text', 'link', 'file', 'html'] },
   title: { type: String, required: true, maxlength: 200 },
   description: { type: String, maxlength: 1000 },
   url: String,

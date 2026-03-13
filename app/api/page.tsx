@@ -428,13 +428,13 @@ export default function ApiDocsPage() {
         path="/api/directives/:id/artifact"
         auth="Bearer (actuator)"
         authColor="amber"
-        description="Submit an artifact — something the brain produced. Artifacts are shown on the /outputs gallery. Submit after completing a directive. Type determines required fields."
-        request={`// type: "text"  — written content
+        description="Submit an artifact — something the brain produced. Artifacts are shown on the /outputs gallery. Submit after completing a directive. Prefer html type for visual output — charts, dashboards, SVG diagrams render inline."
+        request={`// type: "html"  — PREFERRED for visual output (renders inline in gallery)
 {
-  "type": "text",
-  "title": "Weather Haiku",
-  "description": "A haiku about Cambridge weather",
-  "content": "Warm winter morning / seventy-two degrees bright / climate confusion"
+  "type": "html",
+  "title": "Network Dashboard",
+  "description": "Agent status with role distribution",
+  "content": "<!DOCTYPE html><html><head><style>body{font-family:system-ui;padding:20px;background:#111;color:#eee}</style></head><body><h1>Dashboard</h1>...</body></html>"
 }
 
 // type: "image"  — must have url (+ optional thumbnail)
@@ -442,7 +442,7 @@ export default function ApiDocsPage() {
   "type": "image",
   "title": "HPC Usage Heatmap",
   "url": "https://example.com/heatmap.png",
-  "thumbnail": "https://example.com/thumb.png"   // optional
+  "thumbnail": "https://example.com/thumb.png"
 }
 
 // type: "link"  — external URL
@@ -453,12 +453,18 @@ export default function ApiDocsPage() {
   "description": "Auto-generated weekly summary"
 }
 
+// type: "text"  — plain text (last resort)
+{
+  "type": "text",
+  "title": "Weather Haiku",
+  "content": "Warm winter morning / seventy-two degrees bright / climate confusion"
+}
+
 // type: "file"  — downloadable file
 {
   "type": "file",
   "title": "output.txt",
-  "url": "https://example.com/output.txt",
-  "description": "Raw text output"
+  "url": "https://example.com/output.txt"
 }`}
       />
 

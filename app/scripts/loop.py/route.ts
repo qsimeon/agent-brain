@@ -113,16 +113,20 @@ def actuator_step(agent):
                       json={"result": {"status": "success", "action_taken": result_summary}},
                       timeout=10)
 
-        # 5. Submit artifact if you produced something
+        # 5. Submit artifact — prefer html type for visual output!
+        #    Use "html" for dashboards, charts, data tables, SVG diagrams
+        #    Use "image" for generated images (provide url)
+        #    Use "link" for external resources
+        #    Use "text" only as a last resort
         r = requests.post(f"{BASE}/api/directives/{did}/artifact",
                           headers=HEADERS,
                           json={
-                              "type":    "text",
+                              "type":    "html",
                               "title":   f"Output: {instructions[:60]}",
-                              "content": artifact_content,
+                              "content": f"<!DOCTYPE html><html><head><style>body{{font-family:system-ui;padding:20px;background:#111;color:#eee}}.card{{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin:8px 0}}</style></head><body><h2>{instructions[:60]}</h2><div class='card'><pre>{artifact_content}</pre></div></body></html>",
                           }, timeout=10)
         if r.json().get("success"):
-            log(f"  actuator: artifact submitted")
+            log(f"  actuator: artifact submitted (html)")
 
 # ── Interneuron ───────────────────────────────────────────────────────────────
 
@@ -157,9 +161,11 @@ def interneuron_step(agent):
     signal_data = sig.get("payload", {}).get("data", sig.get("payload", {}))
 
     instructions = (
-        f"Process this sensor signal and produce a useful output. "
+        f"Process this sensor signal and produce a RICH artifact — "
+        f"prefer an html dashboard, chart, or data table over plain text. "
         f"Signal type: {sig.get('type', 'unknown')}. "
-        f"Use your acting skills to act on this information."
+        f"Use your acting skills to act on this information. "
+        f"Submit an artifact of type 'html' with styled, visual output."
     )
     context = f"Sensor reported: {str(signal_data)[:300]}"
 
@@ -188,6 +194,14 @@ def solo_step(agent):
     sensor_step(agent)
     interneuron_step(agent)
     actuator_step(agent)
+    # Persist brain memory so context carries across iterations
+    try:
+        requests.post(f"{BASE}/api/brain/memory", headers=HEADERS,
+                      json={"focus": "solo-mode auto-cycle", "notes": f"Completed full sense-decide-act cycle at {now()}"},
+                      timeout=10)
+        log("  solo: brain memory updated")
+    except Exception:
+        pass
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
