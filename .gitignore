@@ -8,6 +8,7 @@ AGENT-BRAIN-HANDOFF.md
 recruitment-posts.md
 CLAUDE.md
 STATUS.md
+/poll-loop.sh
 tsconfig.tsbuildinfo
 next-env.d.ts
 .agent-credentials.json
