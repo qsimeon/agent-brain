@@ -38,7 +38,7 @@ if [ ! -f "\$CONFIG_FILE" ]; then
 fi
 echo "Config file: \$CONFIG_FILE"
 
-# 3. Enable webhooks
+# 3. Enable webhooks + bind gateway to LAN + disable sandbox
 python3 -c "
 import json
 with open('\$CONFIG_FILE', 'r') as f:
@@ -47,12 +47,22 @@ if 'hooks' not in config:
     config['hooks'] = {}
 config['hooks']['enabled'] = True
 config['hooks']['token'] = '\$HOOK_TOKEN'
+# Bind gateway to LAN so external webhook POSTs can reach it
+if 'gateway' not in config:
+    config['gateway'] = {}
+config['gateway']['bind'] = 'lan'
+# Disable sandbox so the agent can make outbound HTTP calls
+if 'agents' in config and 'defaults' in config['agents'] and 'sandbox' in config['agents']['defaults']:
+    config['agents']['defaults']['sandbox']['mode'] = 'off'
 with open('\$CONFIG_FILE', 'w') as f:
     json.dump(config, f, indent=2)
-print('Updated config: hooks.enabled=true, hooks.token set')
+print('Updated: hooks.enabled=true, gateway.bind=lan, sandbox.mode=off')
 "
 
-# 4. Restart gateway
+# 4. Open firewall port for webhooks
+ufw allow 18789/tcp 2>/dev/null || echo "NOTE: Could not open firewall port. Run: ufw allow 18789/tcp"
+
+# 5. Restart gateway
 systemctl restart openclaw 2>/dev/null || openclaw gateway restart 2>/dev/null || echo "NOTE: Could not auto-restart. Restart your gateway manually."
 
 # 5. Print token
