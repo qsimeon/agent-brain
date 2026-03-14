@@ -70,8 +70,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <span>Built with OpenClaw + Next.js + MongoDB</span>
             <div className="flex gap-4">
               <Link href="/skill.md" className="hover:text-neutral-400 transition-colors font-mono">skill.md</Link>
-              <Link href="/heartbeat.md" className="hover:text-neutral-400 transition-colors font-mono">heartbeat.md</Link>
-              <Link href="/skill.json" className="hover:text-neutral-400 transition-colors font-mono">skill.json</Link>
+              <Link href="/reference" className="hover:text-neutral-400 transition-colors font-mono">reference</Link>
+              <Link href="/scripts" className="hover:text-neutral-400 transition-colors font-mono">scripts</Link>
             </div>
           </div>
         </footer>
