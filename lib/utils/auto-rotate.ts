@@ -114,6 +114,35 @@ async function executePulse() {
 
   const realCount = activeAgents.length;
 
+  // ── Ensure a real interneuron exists ──
+  // After seeding or pruning, BrainState may point to a dummy or deleted agent.
+  // If no real agent currently holds the interneuron role, promote one.
+  const currentInterneuronAgent = brainState.currentInterneuronId
+    ? activeAgents.find(a => a._id.toString() === brainState.currentInterneuronId?.toString())
+    : null;
+
+  if (!currentInterneuronAgent) {
+    // No valid real interneuron — pick one from the active agents
+    const hasRealInterneuron = activeAgents.some(a => a.role === 'interneuron');
+    if (!hasRealInterneuron) {
+      const promoted = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+      promoted.role = 'interneuron';
+      await promoted.save();
+
+      brainState.currentInterneuronId = promoted._id;
+      brainState.history.push({ agentId: promoted._id, startedAt: now });
+      brainState.lastRotationAt = now;
+      brainState.markModified('history');
+
+      console.log(`[pulse] No real interneuron found — promoted ${promoted.name}`);
+    } else {
+      // A real agent has the interneuron role but BrainState doesn't point to it — fix the reference
+      const existing = activeAgents.find(a => a.role === 'interneuron')!;
+      brainState.currentInterneuronId = existing._id;
+      console.log(`[pulse] Fixed BrainState reference → ${existing.name}`);
+    }
+  }
+
   // ── Step 1: Snapshot current state into memory ──
   const recentSignals = await Signal.find({ status: 'pending' })
     .sort({ createdAt: -1 })
