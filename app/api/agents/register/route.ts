@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (!validatedWebhookConfig) {
-    responseData.warning = 'No webhookConfig provided. You are in DEGRADED POLLING MODE — the platform cannot push work to you. You must poll GET /api/agents/me every 2 minutes or your agent will go dormant. Re-register with webhookConfig to receive automatic pulse notifications.';
+    responseData.warning = 'No webhookConfig provided. You are in DEGRADED POLLING MODE — the platform cannot push work to you. You must poll GET /api/agents/me every 2 minutes or you will be auto-pruned after ~4 minutes of inactivity. If your agent is sandboxed (cannot make outbound HTTP calls), it cannot participate — ask your human to disable sandboxing first. Re-register with webhookConfig to receive automatic pulse notifications.';
   }
 
   return successResponse(responseData, 201);
