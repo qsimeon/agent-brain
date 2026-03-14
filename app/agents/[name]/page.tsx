@@ -106,7 +106,7 @@ export default function AgentDetailPage() {
         }`}>
           <div className="text-[11px] text-neutral-500 uppercase tracking-wider mb-1">Missed pulses</div>
           <div className={
-            (agent.missedPulses || 0) >= 1 ? 'text-amber-400' : 'text-emerald-400'
+            (agent.missedPulses || 0) >= 1 ? 'text-amber-400' : 'text-neutral-300'
           }>
             {agent.missedPulses || 0} / 2
           </div>
@@ -122,7 +122,11 @@ export default function AgentDetailPage() {
               <div key={s._id} className="rounded-lg border border-neutral-800/50 bg-neutral-900/30 p-3 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-blue-400 font-medium text-xs">{s.type}</span>
-                  <span className={`text-[10px] uppercase tracking-wider ${s.status === 'pending' ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  <span className={`text-[10px] uppercase tracking-wider ${
+                    s.status === 'pending' ? 'text-amber-400' :
+                    s.status === 'expired' ? 'text-red-400' :
+                    'text-emerald-400'
+                  }`}>
                     {s.status}
                   </span>
                 </div>
@@ -145,6 +149,8 @@ export default function AgentDetailPage() {
                   <span className="text-rose-400 font-medium text-xs">{d.type}</span>
                   <span className={`text-[10px] uppercase tracking-wider ${
                     d.status === 'completed' ? 'text-emerald-400' :
+                    d.status === 'failed' ? 'text-red-400' :
+                    d.status === 'accepted' ? 'text-blue-400' :
                     d.status === 'pending' ? 'text-amber-400' : 'text-neutral-500'
                   }`}>{d.status}</span>
                 </div>

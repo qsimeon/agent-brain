@@ -22,7 +22,7 @@ import {
   notifySoloOfPulse,
 } from '@/lib/utils/notify-agent';
 
-const ROTATION_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 const CHECK_INTERVAL_MS = 30 * 1000;         // check every 30 seconds
 
 let started = false;
