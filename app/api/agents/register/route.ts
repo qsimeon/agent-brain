@@ -33,8 +33,12 @@ export async function POST(req: NextRequest) {
     return errorResponse('Missing skills', 'You must declare your skills: { sensing: [...], acting: [...] }. See /skill.md for details.', 400);
   }
 
-  const sensingSkills = Array.isArray(body.skills.sensing) ? body.skills.sensing : [];
-  const actingSkills = Array.isArray(body.skills.acting) ? body.skills.acting : [];
+  // Normalize skills — accept both {"name":"x","description":"y"} objects and plain "x" strings
+  const normalizeSkills = (arr: unknown[]): Array<{name: string; description: string}> =>
+    arr.map(s => typeof s === 'string' ? { name: s, description: '' } : s as {name: string; description: string});
+
+  const sensingSkills = normalizeSkills(Array.isArray(body.skills.sensing) ? body.skills.sensing : []);
+  const actingSkills = normalizeSkills(Array.isArray(body.skills.acting) ? body.skills.acting : []);
 
   const validation = validateSkills(sensingSkills, actingSkills);
   if (!validation.valid) {
