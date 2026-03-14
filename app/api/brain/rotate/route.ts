@@ -5,7 +5,7 @@ import BrainState from '@/lib/models/BrainState';
 import { successResponse, errorResponse, checkAdminKey } from '@/lib/utils/api-helpers';
 import { getRealAgentCount } from '@/lib/utils/agent-helpers';
 
-const ROTATION_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes (matches pulse engine)
+const ROTATION_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes (matches pulse engine)
 
 export async function POST(req: NextRequest) {
   await connectDB();

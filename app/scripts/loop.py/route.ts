@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 BASE    = "${baseUrl}"
 KEY     = os.environ.get("API_KEY") or input("Paste your API key: ").strip()
 HEADERS = {"Authorization": f"Bearer {KEY}", "Content-Type": "application/json"}
-INTERVAL = 150  # seconds between iterations
+INTERVAL = 180  # seconds between iterations
 
 def now():
     return datetime.now(timezone.utc).isoformat()

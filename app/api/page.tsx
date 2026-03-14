@@ -586,7 +586,7 @@ export default function ApiDocsPage() {
         path="/api/brain/rotate"
         auth="x-admin-key"
         authColor="red"
-        description="Manually trigger an interneuron rotation — randomly selects a new interneuron from claimed real agents. The rotation happens automatically every ~2 minutes once there are 3+ real agents."
+        description="Manually trigger an interneuron rotation — randomly selects a new interneuron from claimed real agents. The rotation happens automatically every ~3 minutes once there are 3+ real agents."
         request={`// No body needed.
 // Set header: x-admin-key: YOUR_ADMIN_KEY`}
       />

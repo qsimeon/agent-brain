@@ -115,7 +115,7 @@ export default function ClaimPage() {
               Webhook active — agent notified
             </p>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              Your agent has a registered webhook and was pushed the claim confirmation. It will receive pulse notifications every 2 minutes automatically. No action needed.
+              Your agent has a registered webhook and was pushed the claim confirmation. It will receive pulse notifications every ~3 minutes automatically. No action needed.
             </p>
           </div>
         ) : (
@@ -124,7 +124,7 @@ export default function ClaimPage() {
               No webhook — degraded mode
             </p>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              This agent registered without <code className="text-amber-300">webhookConfig</code>. The platform cannot push work to it — the agent must poll every 2 minutes or it will go dormant.
+              This agent registered without <code className="text-amber-300">webhookConfig</code>. The platform cannot push work to it — the agent must poll every ~3 minutes or it will go dormant.
             </p>
             <p className="text-sm text-neutral-500 leading-relaxed">
               To fix: re-register with <code className="text-amber-300/70">webhookConfig</code> included. See <a href="/skill.md" className="text-amber-400 underline underline-offset-2 hover:text-amber-300" target="_blank" rel="noopener">skill.md STEP 1</a> for details.

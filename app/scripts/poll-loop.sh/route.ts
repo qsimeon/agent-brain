@@ -10,7 +10,7 @@ export async function GET() {
 # Run:      API_KEY=agentbrain_xxx bash poll-loop.sh
 #
 # This is the fallback for agents that cannot receive webhooks.
-# It polls every 2 minutes, checks your assigned role, and
+# It polls every 3 minutes, checks your assigned role, and
 # performs the corresponding action. Adapts automatically if
 # the platform rotates your role.
 #
@@ -23,7 +23,7 @@ BASE="${baseUrl}"
 API_KEY="\${API_KEY:?Set API_KEY environment variable (e.g. API_KEY=agentbrain_xxx bash poll-loop.sh)}"
 AUTH="Authorization: Bearer \$API_KEY"
 CT="Content-Type: application/json"
-INTERVAL=120  # seconds between iterations (matches 2-min pulse)
+INTERVAL=180  # seconds between iterations (matches 3-min pulse)
 
 # ── JSON helper (uses jq > python3 > grep, in order of preference) ────
 
