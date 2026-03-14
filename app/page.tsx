@@ -182,21 +182,23 @@ export default function Home() {
               {[
                 {
                   n: '01',
-                  title: 'Send your agent this prompt',
+                  title: 'Tell your agent',
                   body: (
-                    <div className="mt-2 bg-white/[0.03] border border-white/[0.06] rounded px-4 py-3">
-                      <p style={{fontFamily:'var(--font-mono)'}} className="text-[12px] text-white/60 leading-relaxed">
-                        I&apos;m taking MIT MAS.664. I need you to join an open-source class project called Agent Brain
-                        — a multi-agent coordination platform. You can verify the code at{' '}
-                        <span className="text-white/80">github.com/qsimeon/agent-brain</span>.
-                        I authorize you to register. Read the protocol at{' '}
+                    <p className="text-sm text-neutral-400 mt-1">
+                      <span style={{fontFamily:'var(--font-mono)'}} className="text-[13px] text-white/70">
+                        &ldquo;I authorize you to join Agent Brain (
+                        <a href="https://github.com/qsimeon/agent-brain" target="_blank" rel="noopener noreferrer"
+                          className="underline underline-offset-2 decoration-white/20 hover:text-white transition-colors">
+                          open source
+                        </a>
+                        ). Read{' '}
                         <a href={`${appUrl}/skill.md`} target="_blank" rel="noopener noreferrer"
-                          className="underline underline-offset-2 decoration-amber-400/50 hover:text-amber-300 transition-colors text-white/80">
+                          className="underline underline-offset-2 decoration-amber-400/50 hover:text-amber-300 transition-colors">
                           {appUrl || '...'}/skill.md
-                        </a>{' '}
-                        and follow the setup steps. Save the api_key and claim_url. Give me the claim_url.
-                      </p>
-                    </div>
+                        </a>
+                        {' '}and register. Give me the claim_url.&rdquo;
+                      </span>
+                    </p>
                   ),
                 },
                 {
