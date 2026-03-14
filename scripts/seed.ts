@@ -88,7 +88,7 @@ const DirectiveSchema = new mongoose.Schema({
 const ArtifactSchema = new mongoose.Schema({
   directiveId: { type: mongoose.Schema.Types.ObjectId, ref: 'Directive' },
   agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
-  type: { type: String, required: true, enum: ['image', 'text', 'link', 'file'] },
+  type: { type: String, required: true, enum: ['image', 'text', 'link', 'file', 'html'] },
   title: { type: String, required: true },
   description: String,
   url: String,
