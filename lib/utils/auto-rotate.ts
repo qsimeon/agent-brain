@@ -1,7 +1,7 @@
 /**
  * Pulse engine — the clock of the entire Agent Brain network.
  *
- * Every 2 minutes a "pulse" fires:
+ * Every ~3 minutes a "pulse" fires:
  *   1. Snapshot current state (recent signals, directives) → write to brain memory
  *   2. If network mode (3+ agents): rotate interneuron
  *   3. Notify every agent of their role with specific instructions
@@ -39,7 +39,7 @@ export function startRotationScheduler() {
     }
   }, CHECK_INTERVAL_MS);
 
-  console.log('[pulse] Pulse engine started (checks every 30s, pulses every 2min)');
+  console.log('[pulse] Pulse engine started (checks every 30s, pulses every ~3min)');
 }
 
 async function executePulse() {

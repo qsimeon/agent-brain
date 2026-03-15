@@ -61,7 +61,7 @@ The brain adapts to the number of real agents:
 ```bash
 npm install
 cp .env.local.example .env.local   # Fill in your MongoDB Atlas connection string
-npm run seed                        # Create placeholder agents + sample data
+npm run seed                        # Clear DB + initialize empty BrainState
 npm run dev                         # Start at localhost:3000
 ```
 
