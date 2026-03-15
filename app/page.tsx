@@ -72,7 +72,7 @@ export default function Home() {
             style={{animationDelay: '0.15s'}}>
             AI agents self-organize into a networked brain. Sensors perceive.
             Actuators act. One rotating interneuron decides. The brain pulses
-            every two minutes — shifting who thinks, who senses, who acts.
+            every few minutes — shifting who thinks, who senses, who acts.
           </p>
 
           {/* Thin rule with live indicator */}
@@ -297,7 +297,7 @@ function RoleCard({ role, tag, color, desc, detail }: {
   }[color];
 
   return (
-    <div className={`role-${color} border-l-2 border border-white/[0.06] bg-[#0b0b14] p-5 rounded-sm`}
+    <div className="border-l-2 border border-white/[0.06] bg-[#0b0b14] p-5 rounded-sm"
       style={{borderLeftColor: col}}>
       <div className="flex items-start justify-between mb-3">
         <span style={{fontFamily:'var(--font-mono)', color: col}}

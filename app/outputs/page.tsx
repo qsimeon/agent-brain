@@ -175,16 +175,28 @@ export default function OutputsPage() {
                 {expanded === a._id && (
                   <div className="mt-3 pt-3 border-t border-neutral-800/50 space-y-2">
                     {a.type === 'html' && a.content ? (
-                      <div className="bg-white rounded overflow-hidden" style={{ minHeight: '200px' }}>
-                        <iframe
-                          srcDoc={a.content}
-                          sandbox="allow-scripts"
-                          title={a.title}
-                          className="w-full border-0"
-                          style={{ height: '400px' }}
+                      <>
+                        <div className="bg-white rounded overflow-hidden" style={{ minHeight: '200px' }}>
+                          <iframe
+                            srcDoc={a.content}
+                            sandbox="allow-scripts"
+                            title={a.title}
+                            className="w-full border-0"
+                            style={{ height: '400px' }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <a
+                          href={`/outputs/${a._id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontFamily: 'var(--font-mono)' }}
+                          className="block text-center text-xs text-amber-400 hover:text-amber-300 py-2 border border-amber-500/20 bg-amber-500/5 rounded transition-colors"
                           onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
+                        >
+                          Open full page
+                        </a>
+                      </>
                     ) : a.content ? (
                       <div
                         style={{ fontFamily: 'var(--font-mono)' }}
