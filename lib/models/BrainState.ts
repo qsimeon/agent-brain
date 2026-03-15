@@ -9,7 +9,7 @@ export interface IBrainMemory {
 }
 
 export interface IBrainState extends Document {
-  currentInterneuronId: Types.ObjectId;
+  currentInterneuronId?: Types.ObjectId;
   rotationCount: number;
   lastRotationAt: Date;
   nextRotationAt: Date;
@@ -22,7 +22,7 @@ export interface IBrainState extends Document {
 }
 
 const BrainStateSchema = new Schema<IBrainState>({
-  currentInterneuronId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
+  currentInterneuronId: { type: Schema.Types.ObjectId, ref: 'Agent' },
   rotationCount: { type: Number, default: 0 },
   lastRotationAt: { type: Date, default: Date.now },
   nextRotationAt: { type: Date, required: true },

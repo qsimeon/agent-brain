@@ -6,7 +6,9 @@ import { successResponse } from '@/lib/utils/api-helpers';
 export async function GET() {
   await connectDB();
 
-  const agents = await Agent.find().select('name role lastActive claimStatus description metadata skills');
+  // Only return real agents (exclude dummies if any remain in DB)
+  const agents = await Agent.find({ 'metadata.type': { $ne: 'dummy' } })
+    .select('name role lastActive claimStatus description skills');
   const brainState = await BrainState.findOne({});
 
   const nodes = agents.map(a => ({
@@ -16,7 +18,6 @@ export async function GET() {
     lastActive: a.lastActive,
     claimStatus: a.claimStatus,
     description: a.description,
-    isPlaceholder: a.metadata?.type === 'dummy',
     sensingCount: a.skills.sensing.length,
     actingCount: a.skills.acting.length,
   }));
@@ -24,17 +25,11 @@ export async function GET() {
   const edges: any[] = [];
   const interneuronId = brainState?.currentInterneuronId?.toString();
 
-  // Build a set of dummy agent IDs — dummies float unconnected
-  const dummyIds = new Set(
-    agents.filter(a => a.metadata?.type === 'dummy').map(a => a._id.toString())
-  );
-
-  // Role-topology edges: derive from current role assignments, not historical activity
-  if (interneuronId && !dummyIds.has(interneuronId)) {
+  // Role-topology edges between real agents
+  if (interneuronId) {
     for (const agent of agents) {
       const agentId = agent._id.toString();
       if (agentId === interneuronId) continue;
-      if (dummyIds.has(agentId)) continue;
 
       if (agent.role === 'sensor') {
         edges.push({
@@ -54,7 +49,7 @@ export async function GET() {
     }
   }
 
-  // Safety net: filter edges to only include existing nodes
+  // Filter edges to only include existing nodes
   const nodeIds = new Set(nodes.map(n => n.id));
   const validEdges = edges.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
 

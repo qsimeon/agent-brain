@@ -46,7 +46,7 @@ export default function NetworkPage() {
       {/* Footer hint */}
       <p style={{fontFamily: 'var(--font-mono)'}}
         className="mt-3 text-[10px] text-white/15 uppercase tracking-widest text-center">
-        blue = sensor · gold = interneuron · red = actuator · dashed = placeholder
+        blue = sensor · gold = interneuron · red = actuator
       </p>
     </div>
   );

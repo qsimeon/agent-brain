@@ -9,7 +9,6 @@ interface NetworkNode {
   role: 'sensor' | 'actuator' | 'interneuron';
   lastActive: string;
   description: string;
-  isPlaceholder?: boolean;
   sensingCount?: number;
   actingCount?: number;
   x?: number;
@@ -89,6 +88,33 @@ export default function NetworkGraph() {
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight || 500;
 
+    // If no real agents, show ghost preview of what the network looks like
+    if (data.nodes.length === 0) {
+      const ghostNodes = [
+        { x: width * 0.35, y: height * 0.35, role: 'sensor', label: 'sensor' },
+        { x: width * 0.65, y: height * 0.3, role: 'interneuron', label: 'interneuron' },
+        { x: width * 0.5, y: height * 0.65, role: 'actuator', label: 'actuator' },
+      ];
+      const ghostEdges = [
+        { x1: ghostNodes[0].x, y1: ghostNodes[0].y, x2: ghostNodes[1].x, y2: ghostNodes[1].y },
+        { x1: ghostNodes[1].x, y1: ghostNodes[1].y, x2: ghostNodes[2].x, y2: ghostNodes[2].y },
+      ];
+      svg.append('g').selectAll('line').data(ghostEdges).join('line')
+        .attr('x1', d => d.x1).attr('y1', d => d.y1).attr('x2', d => d.x2).attr('y2', d => d.y2)
+        .attr('stroke', 'rgba(255,255,255,0.06)').attr('stroke-width', 1).attr('stroke-dasharray', '4,4');
+      const g = svg.append('g').selectAll('g').data(ghostNodes).join('g')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+      g.append('circle').attr('r', 10)
+        .attr('fill', 'transparent').attr('stroke', d => ROLE_COLORS[d.role])
+        .attr('stroke-width', 1).attr('stroke-dasharray', '3,3').attr('opacity', 0.25);
+      g.append('text').text(d => d.label).attr('dy', -16).attr('text-anchor', 'middle')
+        .attr('fill', '#333').attr('font-size', '10px').attr('font-style', 'italic');
+      svg.append('text').text('No agents registered — connect yours to bring the brain to life')
+        .attr('x', width / 2).attr('y', height - 30).attr('text-anchor', 'middle')
+        .attr('fill', '#444').attr('font-size', '12px');
+      return;
+    }
+
     // Defs for glow filter
     const defs = svg.append('defs');
     const filter = defs.append('filter').attr('id', 'glow');
@@ -152,8 +178,8 @@ export default function NetworkGraph() {
         })
       );
 
-    // Glow circle for interneuron (real agents only)
-    node.filter((d: any) => d.role === 'interneuron' && !d.isPlaceholder)
+    // Glow circle for interneuron
+    node.filter((d: any) => d.role === 'interneuron')
       .append('circle')
       .attr('r', 18)
       .attr('fill', 'none')
@@ -162,27 +188,25 @@ export default function NetworkGraph() {
       .attr('opacity', 0.4)
       .attr('filter', 'url(#glow)');
 
-    // Main circles — placeholders get dashed stroke and lower opacity
+    // Main circles
     node.append('circle')
-      .attr('r', (d: any) => d.isPlaceholder ? 8 : (d.role === 'interneuron' ? 14 : 10))
-      .attr('fill', (d: any) => d.isPlaceholder ? 'transparent' : ROLE_COLORS[d.role])
-      .attr('stroke', (d: any) => d.isPlaceholder ? ROLE_COLORS[d.role] : '#1a1a1a')
-      .attr('stroke-width', (d: any) => d.isPlaceholder ? 1.5 : 2)
-      .attr('stroke-dasharray', (d: any) => d.isPlaceholder ? '3,3' : null)
-      .attr('opacity', (d: any) => d.isPlaceholder ? 0.35 : 1)
-      .attr('filter', (d: any) => (!d.isPlaceholder && d.role === 'interneuron') ? 'url(#glow)' : null)
-      .style('cursor', (d: any) => d.isPlaceholder ? 'default' : 'pointer');
+      .attr('r', (d: any) => d.role === 'interneuron' ? 14 : 10)
+      .attr('fill', (d: any) => ROLE_COLORS[d.role])
+      .attr('stroke', '#1a1a1a')
+      .attr('stroke-width', 2)
+      .attr('filter', (d: any) => d.role === 'interneuron' ? 'url(#glow)' : null)
+      .style('cursor', 'pointer');
 
-    // Labels — placeholders get "(placeholder)" suffix and lower opacity
+    // Labels
     node.append('text')
-      .text((d: any) => d.isPlaceholder ? `${d.name} (placeholder)` : d.name)
+      .text((d: any) => d.name)
       .attr('dy', -18)
       .attr('text-anchor', 'middle')
-      .attr('fill', (d: any) => d.isPlaceholder ? '#555' : '#9ca3af')
+      .attr('fill', '#9ca3af')
       .attr('font-size', '11px');
 
-    // Skill count badges below name (real agents only)
-    node.filter((d: any) => !d.isPlaceholder && (d.sensingCount > 0 || d.actingCount > 0))
+    // Skill count badges
+    node.filter((d: any) => (d.sensingCount > 0 || d.actingCount > 0))
       .append('text')
       .text((d: any) => `S:${d.sensingCount} A:${d.actingCount}`)
       .attr('dy', -8)
@@ -205,7 +229,7 @@ export default function NetworkGraph() {
       const roleEl = document.createElement('div');
       roleEl.className = 'text-xs';
       roleEl.style.color = ROLE_COLORS[d.role];
-      roleEl.textContent = `${d.role.toUpperCase()}${d.isPlaceholder ? ' (placeholder)' : ''}`;
+      roleEl.textContent = d.role.toUpperCase();
       tooltip.append(nameEl, roleEl);
       if (d.description) {
         const descEl = document.createElement('div');
@@ -262,7 +286,6 @@ export default function NetworkGraph() {
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Sensor</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> Actuator</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-amber-500 inline-block" /> Interneuron</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full border border-neutral-500 border-dashed inline-block opacity-50" /> Placeholder</span>
       </div>
 
       <svg
