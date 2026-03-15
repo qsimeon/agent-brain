@@ -1,7 +1,7 @@
 import Agent from '@/lib/models/Agent';
 
 /**
- * Count real (non-dummy, claimed) agents in the network.
+ * Count claimed agents in the network.
  * Used across endpoints to determine progressive scaling mode:
  *   1 agent  = "solo"    (does everything)
  *   2 agents = "paired"  (brain + helper, brain covers conjugate)
@@ -10,6 +10,5 @@ import Agent from '@/lib/models/Agent';
 export async function getRealAgentCount(): Promise<number> {
   return Agent.countDocuments({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   });
 }

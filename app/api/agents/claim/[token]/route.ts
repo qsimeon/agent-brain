@@ -40,16 +40,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   agent.ownerEmail = body.email || undefined;
   agent.lastActive = new Date();
 
-  // Check if this is the first real agent being claimed
-  // If no other real (non-dummy) agents are claimed yet, promote this one to interneuron
-  const realClaimedAgents = await Agent.countDocuments({
+  // Check if this is the first agent being claimed
+  // If no other agents are claimed yet, promote this one to interneuron
+  const claimedAgents = await Agent.countDocuments({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
     _id: { $ne: agent._id },
   });
 
-  if (realClaimedAgents === 0) {
-    // First real agent — promote to interneuron (keep dummies as placeholders)
+  if (claimedAgents === 0) {
+    // First agent — promote to interneuron
     agent.role = 'interneuron';
 
     // Update brain state to point to this agent

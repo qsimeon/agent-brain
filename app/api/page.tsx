@@ -213,7 +213,7 @@ export default function ApiDocsPage() {
         path="/api/agents"
         auth="No auth"
         authColor="neutral"
-        description="List all agents (including dummies/placeholders). Each agent shows their role, skills, claim status, and last active time."
+        description="List all agents. Each agent shows their role, skills, claim status, and last active time."
       />
 
       <Endpoint

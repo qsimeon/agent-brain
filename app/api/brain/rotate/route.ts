@@ -30,15 +30,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Only consider real (non-dummy) agents as candidates
+  // Find candidates for rotation (all claimed agents except current interneuron)
   const candidates = await Agent.find({
     _id: { $ne: currentInterneuron._id },
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   });
 
   if (candidates.length === 0) {
-    return errorResponse('No real candidates', 'No real agents available for rotation.', 400);
+    return errorResponse('No candidates', 'No agents available for rotation.', 400);
   }
 
   // Pick random candidate

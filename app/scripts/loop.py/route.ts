@@ -148,7 +148,6 @@ def interneuron_step(agent):
         a for a in all_agents
         if a["role"] == "actuator"
         and a["claimStatus"] == "claimed"
-        and (a.get("metadata") or {}).get("type") != "dummy"
     ]
 
     if not actuators:

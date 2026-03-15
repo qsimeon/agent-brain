@@ -49,10 +49,9 @@ async function executePulse() {
   // Only pulse when the interval has elapsed
   if (brainState.nextRotationAt > new Date()) return;
 
-  // Get all real (claimed, non-dummy) agents
+  // Get all claimed agents
   const realAgents = await Agent.find({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   });
   if (realAgents.length === 0) return;
 
@@ -103,7 +102,6 @@ async function executePulse() {
   // Re-fetch agents after pruning
   const activeAgents = await Agent.find({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   });
   if (activeAgents.length === 0) {
     // All agents were pruned — save state and exit
@@ -114,17 +112,17 @@ async function executePulse() {
 
   const realCount = activeAgents.length;
 
-  // ── Ensure a real interneuron exists ──
-  // After seeding or pruning, BrainState may point to a dummy or deleted agent.
-  // If no real agent currently holds the interneuron role, promote one.
+  // ── Ensure an interneuron exists ──
+  // After pruning, BrainState may point to a deleted agent.
+  // If no agent currently holds the interneuron role, promote one.
   const currentInterneuronAgent = brainState.currentInterneuronId
     ? activeAgents.find(a => a._id.toString() === brainState.currentInterneuronId?.toString())
     : null;
 
   if (!currentInterneuronAgent) {
-    // No valid real interneuron — pick one from the active agents
-    const hasRealInterneuron = activeAgents.some(a => a.role === 'interneuron');
-    if (!hasRealInterneuron) {
+    // No valid interneuron — pick one from the active agents
+    const hasInterneuron = activeAgents.some(a => a.role === 'interneuron');
+    if (!hasInterneuron) {
       const promoted = activeAgents[Math.floor(Math.random() * activeAgents.length)];
       promoted.role = 'interneuron';
       await promoted.save();
@@ -134,9 +132,9 @@ async function executePulse() {
       brainState.lastRotationAt = now;
       brainState.markModified('history');
 
-      console.log(`[pulse] No real interneuron found — promoted ${promoted.name}`);
+      console.log(`[pulse] No interneuron found — promoted ${promoted.name}`);
     } else {
-      // A real agent has the interneuron role but BrainState doesn't point to it — fix the reference
+      // An agent has the interneuron role but BrainState doesn't point to it — fix the reference
       const existing = activeAgents.find(a => a.role === 'interneuron')!;
       brainState.currentInterneuronId = existing._id;
       console.log(`[pulse] Fixed BrainState reference → ${existing.name}`);
@@ -236,7 +234,6 @@ async function executePulse() {
   // Re-fetch agents to get updated roles after rotation
   const updatedAgents = await Agent.find({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   });
 
   if (updatedAgents.length === 0) return;

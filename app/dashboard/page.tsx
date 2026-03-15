@@ -175,22 +175,20 @@ export default function DashboardPage() {
                   <span
                     style={{ fontFamily: 'var(--font-mono)' }}
                     className={`text-[10px] ${
-                      a.metadata?.type === 'dummy'
-                        ? 'text-neutral-600 italic'
-                        : a.claimStatus === 'claimed'
-                          ? 'text-emerald-500'
-                          : 'text-neutral-600'
+                      a.claimStatus === 'claimed'
+                        ? 'text-emerald-500'
+                        : 'text-neutral-600'
                     }`}
                   >
-                    {a.metadata?.type === 'dummy' ? 'placeholder' : a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
+                    {a.claimStatus === 'claimed' ? 'claimed' : 'pending'}
                   </span>
 
-                  {/* Role selector — admin only, disabled for dummy/placeholder agents */}
+                  {/* Role selector — admin only */}
                   <select
                     value={a.role}
                     onChange={e => reassignRole(a.name, e.target.value)}
-                    disabled={reassigning === a.name || a.metadata?.type === 'dummy'}
-                    title={a.metadata?.type === 'dummy' ? 'Cannot reassign placeholder agents' : 'Change role'}
+                    disabled={reassigning === a.name}
+                    title="Change role"
                     style={{ fontFamily: 'var(--font-mono)' }}
                     className={`text-[10px] uppercase tracking-wider border px-2 py-0.5 bg-neutral-900 cursor-pointer disabled:opacity-40 transition-colors ${
                       a.role === 'interneuron'

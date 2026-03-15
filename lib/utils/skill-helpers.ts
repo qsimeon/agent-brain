@@ -44,14 +44,12 @@ export function validateSkills(
  * The claim endpoint enforces the interneuron invariant as a safety net.
  */
 export async function assignRoleBySkills(): Promise<'sensor' | 'actuator' | 'interneuron'> {
-  const realFilter = { 'metadata.type': { $ne: 'dummy' } };
-
-  const anyRealAgent = await Agent.countDocuments(realFilter);
-  if (anyRealAgent === 0) return 'interneuron';
+  const anyAgent = await Agent.countDocuments({});
+  if (anyAgent === 0) return 'interneuron';
 
   const [sensors, actuators] = await Promise.all([
-    Agent.countDocuments({ ...realFilter, role: 'sensor' }),
-    Agent.countDocuments({ ...realFilter, role: 'actuator' }),
+    Agent.countDocuments({ role: 'sensor' }),
+    Agent.countDocuments({ role: 'actuator' }),
   ]);
 
   if (sensors < actuators) return 'sensor';

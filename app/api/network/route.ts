@@ -6,8 +6,7 @@ import { successResponse } from '@/lib/utils/api-helpers';
 export async function GET() {
   await connectDB();
 
-  // Only return real agents (exclude dummies if any remain in DB)
-  const agents = await Agent.find({ 'metadata.type': { $ne: 'dummy' } })
+  const agents = await Agent.find()
     .select('name role lastActive claimStatus description skills');
   const brainState = await BrainState.findOne({});
 

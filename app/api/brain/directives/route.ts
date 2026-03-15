@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return errorResponse('Not the brain', 'Only the interneuron can issue directives.', 403);
   }
 
-  // Verify this is the CURRENT interneuron (not a dummy ThinkBot)
+  // Verify this is the CURRENT interneuron
   const brainState = await BrainState.findOne({});
   if (!brainState || brainState.currentInterneuronId.toString() !== agent._id.toString()) {
     return errorResponse('Not current interneuron', 'You are not the active interneuron right now.', 403);
@@ -68,14 +68,8 @@ export async function POST(req: NextRequest) {
     }
   } else if (realCount === 1) {
     // Solo mode: brain can direct itself (it's the only agent)
-    if (targetAgent.metadata?.type === 'dummy') {
-      return errorResponse('Target is a placeholder', `Agent "${toAgentName}" is a placeholder agent and cannot execute directives.`, 400);
-    }
   } else {
     // Paired mode: brain should delegate to its partner, not itself
-    if (targetAgent.metadata?.type === 'dummy') {
-      return errorResponse('Target is a placeholder', `Agent "${toAgentName}" is a placeholder agent and cannot execute directives.`, 400);
-    }
     if (targetAgent._id.toString() === agent._id.toString()) {
       return errorResponse(
         'Delegate to your partner',

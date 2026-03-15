@@ -31,11 +31,10 @@ export async function POST(req: NextRequest) {
     return errorResponse('Not current interneuron', 'You are not the active interneuron right now.', 403);
   }
 
-  // Find all claimed real sensors with a webhookConfig
+  // Find all claimed sensors with a webhookConfig
   const sensors = await Agent.find({
     role: 'sensor',
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
     webhookConfig: { $exists: true },
   });
 

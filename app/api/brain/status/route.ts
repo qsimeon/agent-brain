@@ -26,7 +26,6 @@ export async function GET() {
   // Aggregate skill counts across all real agents
   const realAgentDocs = await Agent.find({
     claimStatus: 'claimed',
-    'metadata.type': { $ne: 'dummy' },
   }).select('skills');
   const totalSkills = { sensing: 0, acting: 0 };
   for (const a of realAgentDocs) {
