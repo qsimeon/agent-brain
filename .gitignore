@@ -12,3 +12,4 @@ STATUS.md
 tsconfig.tsbuildinfo
 next-env.d.ts
 .agent-credentials.json
+tasks/
