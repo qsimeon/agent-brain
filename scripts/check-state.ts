@@ -41,7 +41,7 @@ const AgentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const BrainStateSchema = new mongoose.Schema({
-  currentInterneuronId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
+  currentInterneuronId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
   rotationCount: { type: Number, default: 0 },
   lastRotationAt: { type: Date, default: Date.now },
   nextRotationAt: { type: Date, required: true },
@@ -56,7 +56,7 @@ const BrainStateSchema = new mongoose.Schema({
 const SignalSchema = new mongoose.Schema({
   fromAgentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
   type: { type: String, required: true },
-  source: { type: String },
+  source: { type: String, required: true },
   payload: { type: mongoose.Schema.Types.Mixed, required: true },
   status: { type: String, default: 'pending' },
   processedByBrainId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },

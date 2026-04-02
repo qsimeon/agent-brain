@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { nanoid } from 'nanoid';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -37,8 +36,8 @@ const AgentSchema = new mongoose.Schema({
   description: { type: String, required: true },
   apiKey: { type: String, required: true, unique: true },
   claimToken: { type: String, required: true, unique: true },
-  claimStatus: { type: String, default: 'claimed' },
-  role: { type: String, required: true },
+  claimStatus: { type: String, default: 'pending_claim', enum: ['pending_claim', 'claimed'] },
+  role: { type: String, required: true, enum: ['sensor', 'actuator', 'interneuron'] },
   ownerEmail: String,
   skills: {
     type: {
@@ -47,8 +46,17 @@ const AgentSchema = new mongoose.Schema({
     },
     required: true,
   },
+  webhookConfig: {
+    type: { type: String, enum: ['openclaw', 'webhook'] },
+    gatewayUrl: String,
+    hookToken: String,
+    agentId: String,
+    url: String,
+    secret: String,
+  },
   metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
   lastActive: { type: Date, default: Date.now },
+  missedPulses: { type: Number, default: 0 },
 }, { timestamps: true });
 
 const BrainStateSchema = new mongoose.Schema({

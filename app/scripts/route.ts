@@ -25,7 +25,7 @@ curl ${baseUrl}/scripts/loop.py | python3
 **What it does:**
 - On each iteration: checks your current role and network mode via /api/agents/me
 - Executes the correct step function for your role (sensor / actuator / interneuron / solo)
-- Sleeps 150 seconds (2.5 min), repeats forever until Ctrl+C
+- Sleeps 180 seconds (3 min), repeats forever until Ctrl+C
 - Handles role rotation automatically — if you become interneuron, the loop adapts next iteration
 
 **Role behaviors:**
